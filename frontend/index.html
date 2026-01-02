@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FashionAI - Cloth Recognition</title>
+    <meta name="description"
+        content="AI-powered clothing detection using YOLOv8. Detect shirts, dresses, jackets, pants and more.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0b0f19;
+            --bg-secondary: #111827;
+            --bg-card: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.08);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.6);
+            --accent-primary: #6366f1;
+            --accent-secondary: #ec4899;
+            --accent-tertiary: #14b8a6;
+            --success: #22c55e;
+            --warning: #f59e0b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        .bg-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(236, 72, 153, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(20, 184, 166, 0.05) 0%, transparent 70%);
+            z-index: -1;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .badge-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .title {
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #818cf8 0%, #ec4899 50%, #14b8a6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+        }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 30px 0;
+            padding: 6px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .nav-tab {
+            padding: 12px 28px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .nav-tab:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(135deg, var(--accent-primary), #4f46e5);
+            color: white;
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 24px;
+            transition: all 0.3s;
+        }
+
+        .card:hover {
+            border-color: rgba(99, 102, 241, 0.3);
+            box-shadow: 0 0 40px rgba(99, 102, 241, 0.1);
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Grid Layout */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 900px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .title {
+                font-size: 2rem;
+            }
+        }
+
+        /* Upload Zone */
+        .upload-zone {
+            border: 2px dashed var(--border);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.02), rgba(236, 72, 153, 0.02));
+        }
+
+        .upload-zone:hover,
+        .upload-zone.dragover {
+            border-color: var(--accent-primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
+        }
+
+        .upload-text {
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .upload-hint {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        /* Preview */
+        .preview-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4/3;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .preview-container.has-image {
+            display: block;
+        }
+
+        .preview-image,
+        .preview-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), #4f46e5);
+            color: white;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        /* Slider */
+        .slider-container {
+            margin: 20px 0;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: var(--bg-secondary);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--accent-primary);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+        }
+
+        /* Results */
+        .result-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 10px;
+            margin-bottom: 8px;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .result-item:hover {
+            border-color: var(--border);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .color-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .item-name {
+            flex: 1;
+            font-weight: 600;
+        }
+
+        .conf-badge {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .stat-card.pink {
+            background: rgba(236, 72, 153, 0.1);
+            border-color: rgba(236, 72, 153, 0.2);
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #818cf8, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        /* Class Tags */
+        .class-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .class-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        /* Webcam */
+        .webcam-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4/3;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .webcam-video,
+        .webcam-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .webcam-status {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: #ef4444;
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 16px 24px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Loading */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(11, 15, 25, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            z-index: 10;
+        }
+
+        .loading-overlay.show {
+            display: flex;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border);
+            margin-top: 60px;
+        }
+
+        /* No results */
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .no-results-icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-gradient"></div>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="badge">
+                <span class="badge-dot"></span>
+                Powered by YOLOv8
+            </div>
+            <h1 class="title">FashionAI</h1>
+            <p class="subtitle">AI-powered clothing detection and classification</p>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="nav-tabs">
+            <button class="nav-tab active" data-tab="upload">🖼️ Upload</button>
+            <button class="nav-tab" data-tab="webcam">📹 Live Cam</button>
+        </nav>
+
+        <!-- Upload Tab -->
+        <section id="upload-tab" class="tab-content active">
+            <div class="main-grid">
+                <!-- Input -->
+                <div class="card">
+                    <h2 class="card-title">📤 Input Image</h2>
+
+                    <div class="upload-zone" id="uploadZone">
+                        <div class="upload-icon">📁</div>
+                        <div class="upload-text">Drag & drop or click to upload</div>
+                        <div class="upload-hint">Supports JPG, PNG, WebP</div>
+                    </div>
+                    <input type="file" id="fileInput" accept="image/*" hidden>
+
+                    <div class="preview-container" id="previewContainer">
+                        <img id="previewImage" class="preview-image" alt="Preview">
+                        <div class="loading-overlay" id="loadingOverlay">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>🎯 Confidence</span>
+                            <span id="confValue">25%</span>
+                        </div>
+                        <input type="range" class="slider" id="confSlider" min="10" max="90" value="25">
+                    </div>
+
+                    <button class="btn btn-primary" id="detectBtn" style="width: 100%;" disabled>
+                        ✨ Detect Clothing
+                    </button>
+
+                    <h3 class="card-title" style="margin-top: 24px;">🏷️ Detectable Classes</h3>
+                    <div class="class-tags" id="classTags"></div>
+                </div>
+
+                <!-- Output -->
+                <div class="card">
+                    <h2 class="card-title">🎨 Results</h2>
+
+                    <div id="outputContainer" style="display: none;">
+                        <canvas id="outputCanvas" style="width: 100%; border-radius: 12px;"></canvas>
+
+                        <div class="stats-grid" id="statsGrid" style="margin-top: 20px;"></div>
+                        <div id="resultsList"></div>
+                    </div>
+
+                    <div class="no-results" id="noResults">
+                        <div class="no-results-icon">👆</div>
+                        <div>Upload an image to start</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Webcam Tab -->
+        <section id="webcam-tab" class="tab-content">
+            <div class="main-grid">
+                <!-- Camera -->
+                <div class="card">
+                    <h2 class="card-title">📷 Camera Feed</h2>
+
+                    <div class="webcam-container">
+                        <video id="webcamVideo" class="webcam-video" autoplay playsinline></video>
+                        <div class="webcam-status" id="webcamStatus" style="display: none;">
+                            <span class="live-dot"></span>
+                            <span>LIVE</span>
+                        </div>
+                    </div>
+
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>🎯 Confidence</span>
+                            <span id="camConfValue">25%</span>
+                        </div>
+                        <input type="range" class="slider" id="camConfSlider" min="10" max="90" value="25">
+                    </div>
+
+                    <div style="display: flex; gap: 12px;">
+                        <button class="btn btn-primary" id="startCamBtn" style="flex: 1;">
+                            📸 Start Camera
+                        </button>
+                        <button class="btn btn-secondary" id="stopCamBtn" style="flex: 1;" disabled>
+                            ⏹️ Stop
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Live Output -->
+                <div class="card">
+                    <h2 class="card-title">⚡ Live Detection</h2>
+
+                    <div class="webcam-container">
+                        <canvas id="camOutputCanvas" class="webcam-canvas"></canvas>
+                    </div>
+
+                    <div id="camResults" style="margin-top: 16px;">
+                        <div class="no-results">
+                            <div class="no-results-icon">👀</div>
+                            <div>Start camera to begin detection</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>FashionAI v2.0 • Powered by YOLOv8</p>
+            <p style="font-size: 0.85rem; margin-top: 8px;">8 Classes: Tshirt, Dress, Jacket, Pants, Shirt, Short,
+                Skirt, Sweater</p>
+        </footer>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ============================================
+        // Configuration
+        // ============================================
+        // Change this URL after deploying backend to Render
+        const API_URL = window.location.hostname === 'localhost'
+            ? 'http://localhost:8000'
+            : 'https://your-backend.onrender.com';  // TODO: Update after deployment
+
+        // Class colors matching backend
+        const CLASS_COLORS = {
+            'tshirt': '#FF6B6B',
+            't-shirt': '#FF6B6B',
+            'dress': '#45B7D1',
+            'jacket': '#96CEB4',
+            'pants': '#4ECDC4',
+            'shirt': '#FFEAA7',
+            'short': '#98D8C8',
+            'shorts': '#98D8C8',
+            'skirt': '#DDA0DD',
+            'sweater': '#F7DC6F'
+        };
+
+        const CLASS_NAMES = ['Tshirt', 'Dress', 'Jacket', 'Pants', 'Shirt', 'Short', 'Skirt', 'Sweater'];
+
+        // ============================================
+        // DOM Elements
+        // ============================================
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+        const previewContainer = document.getElementById('previewContainer');
+        const previewImage = document.getElementById('previewImage');
+        const confSlider = document.getElementById('confSlider');
+        const confValue = document.getElementById('confValue');
+        const detectBtn = document.getElementById('detectBtn');
+        const outputContainer = document.getElementById('outputContainer');
+        const outputCanvas = document.getElementById('outputCanvas');
+        const noResults = document.getElementById('noResults');
+        const statsGrid = document.getElementById('statsGrid');
+        const resultsList = document.getElementById('resultsList');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const classTags = document.getElementById('classTags');
+        const toast = document.getElementById('toast');
+
+        // Webcam elements
+        const webcamVideo = document.getElementById('webcamVideo');
+        const webcamStatus = document.getElementById('webcamStatus');
+        const camConfSlider = document.getElementById('camConfSlider');
+        const camConfValue = document.getElementById('camConfValue');
+        const startCamBtn = document.getElementById('startCamBtn');
+        const stopCamBtn = document.getElementById('stopCamBtn');
+        const camOutputCanvas = document.getElementById('camOutputCanvas');
+        const camResults = document.getElementById('camResults');
+
+        // ============================================
+        // Initialize
+        // ============================================
+        let currentFile = null;
+        let webcamStream = null;
+        let detectionInterval = null;
+
+        // Render class tags
+        CLASS_NAMES.forEach(name => {
+            const color = CLASS_COLORS[name.toLowerCase()] || '#888';
+            classTags.innerHTML += `
+                <span class="class-tag">
+                    <span class="color-dot" style="background: ${color}; width: 8px; height: 8px;"></span>
+                    ${name}
+                </span>
+            `;
+        });
+
+        // ============================================
+        // Tab Navigation
+        // ============================================
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(`${tab.dataset.tab}-tab`).classList.add('active');
+            });
+        });
+
+        // ============================================
+        // File Upload
+        // ============================================
+        uploadZone.addEventListener('click', () => fileInput.click());
+
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                handleFile(file);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files[0]) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            currentFile = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImage.src = e.target.result;
+                previewContainer.classList.add('has-image');
+                uploadZone.style.display = 'none';
+                detectBtn.disabled = false;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // ============================================
+        // Sliders
+        // ============================================
+        confSlider.addEventListener('input', (e) => {
+            confValue.textContent = `${e.target.value}%`;
+        });
+
+        camConfSlider.addEventListener('input', (e) => {
+            camConfValue.textContent = `${e.target.value}%`;
+        });
+
+        // ============================================
+        // Detection
+        // ============================================
+        detectBtn.addEventListener('click', async () => {
+            if (!currentFile) return;
+
+            loadingOverlay.classList.add('show');
+            detectBtn.disabled = true;
+
+            try {
+                const formData = new FormData();
+                formData.append('file', currentFile);
+                formData.append('confidence', confSlider.value / 100);
+
+                const response = await fetch(`${API_URL}/detect`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error('Detection failed');
+
+                const data = await response.json();
+                displayResults(data);
+                showToast('✅ Detection complete!');
+
+            } catch (error) {
+                console.error(error);
+                showToast('❌ Error: Could not connect to API');
+            } finally {
+                loadingOverlay.classList.remove('show');
+                detectBtn.disabled = false;
+            }
+        });
+
+        function displayResults(data) {
+            noResults.style.display = 'none';
+            outputContainer.style.display = 'block';
+
+            // Draw on canvas
+            const img = new Image();
+            img.onload = () => {
+                outputCanvas.width = img.width;
+                outputCanvas.height = img.height;
+                const ctx = outputCanvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+
+                data.detections.forEach(det => {
+                    const [x1, y1, x2, y2] = det.bbox;
+                    const color = CLASS_COLORS[det.class.toLowerCase()] || '#888';
+
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+
+                    ctx.fillStyle = color;
+                    ctx.fillRect(x1, y1 - 24, ctx.measureText(`${det.class} ${(det.confidence * 100).toFixed(0)}%`).width + 16, 24);
+
+                    ctx.fillStyle = '#fff';
+                    ctx.font = 'bold 14px Plus Jakarta Sans';
+                    ctx.fillText(`${det.class} ${(det.confidence * 100).toFixed(0)}%`, x1 + 8, y1 - 7);
+                });
+            };
+            img.src = previewImage.src;
+
+            // Stats
+            const count = data.detections.length;
+            const avgConf = count > 0
+                ? data.detections.reduce((sum, d) => sum + d.confidence, 0) / count
+                : 0;
+
+            statsGrid.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${count}</div>
+                    <div class="stat-label">Items Found</div>
+                </div>
+                <div class="stat-card pink">
+                    <div class="stat-value">${(avgConf * 100).toFixed(0)}%</div>
+                    <div class="stat-label">Avg Confidence</div>
+                </div>
+            `;
+
+            // Results list
+            resultsList.innerHTML = data.detections.map(det => {
+                const color = CLASS_COLORS[det.class.toLowerCase()] || '#888';
+                return `
+                    <div class="result-item">
+                        <span class="color-dot" style="background: ${color}; box-shadow: 0 0 10px ${color}40;"></span>
+                        <span class="item-name">${det.class}</span>
+                        <span class="conf-badge">${(det.confidence * 100).toFixed(0)}%</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ============================================
+        // Webcam
+        // ============================================
+        startCamBtn.addEventListener('click', startWebcam);
+        stopCamBtn.addEventListener('click', stopWebcam);
+
+        async function startWebcam() {
+            try {
+                webcamStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment', width: 640, height: 480 }
+                });
+                webcamVideo.srcObject = webcamStream;
+                webcamStatus.style.display = 'flex';
+                startCamBtn.disabled = true;
+                stopCamBtn.disabled = false;
+
+                // Start detection loop
+                detectionInterval = setInterval(detectWebcamFrame, 500);
+                showToast('📷 Camera started');
+
+            } catch (error) {
+                console.error(error);
+                showToast('❌ Camera access denied');
+            }
+        }
+
+        function stopWebcam() {
+            if (webcamStream) {
+                webcamStream.getTracks().forEach(track => track.stop());
+                webcamStream = null;
+            }
+            if (detectionInterval) {
+                clearInterval(detectionInterval);
+                detectionInterval = null;
+            }
+            webcamStatus.style.display = 'none';
+            startCamBtn.disabled = false;
+            stopCamBtn.disabled = true;
+            showToast('⏹️ Camera stopped');
+        }
+
+        async function detectWebcamFrame() {
+            if (!webcamStream) return;
+
+            const canvas = document.createElement('canvas');
+            canvas.width = webcamVideo.videoWidth;
+            canvas.height = webcamVideo.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(webcamVideo, 0, 0);
+
+            try {
+                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.8));
+                const formData = new FormData();
+                formData.append('file', blob, 'frame.jpg');
+                formData.append('confidence', camConfSlider.value / 100);
+
+                const response = await fetch(`${API_URL}/detect`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) return;
+
+                const data = await response.json();
+
+                // Draw results
+                camOutputCanvas.width = canvas.width;
+                camOutputCanvas.height = canvas.height;
+                const outCtx = camOutputCanvas.getContext('2d');
+                outCtx.drawImage(webcamVideo, 0, 0);
+
+                data.detections.forEach(det => {
+                    const [x1, y1, x2, y2] = det.bbox;
+                    const color = CLASS_COLORS[det.class.toLowerCase()] || '#888';
+
+                    outCtx.strokeStyle = color;
+                    outCtx.lineWidth = 3;
+                    outCtx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+
+                    outCtx.fillStyle = color;
+                    outCtx.font = 'bold 14px Plus Jakarta Sans';
+                    outCtx.fillText(`${det.class} ${(det.confidence * 100).toFixed(0)}%`, x1 + 4, y1 - 8);
+                });
+
+                // Update results
+                if (data.detections.length > 0) {
+                    camResults.innerHTML = data.detections.map(det => {
+                        const color = CLASS_COLORS[det.class.toLowerCase()] || '#888';
+                        return `
+                            <div class="result-item">
+                                <span class="color-dot" style="background: ${color};"></span>
+                                <span class="item-name">${det.class}</span>
+                                <span class="conf-badge">${(det.confidence * 100).toFixed(0)}%</span>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    camResults.innerHTML = '<div style="text-align: center; color: var(--text-secondary);">👀 Looking...</div>';
+                }
+
+            } catch (error) {
+                console.error('Detection error:', error);
+            }
+        }
+
+        // ============================================
+        // Toast
+        // ============================================
+        function showToast(message) {
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // Check API connection
+        fetch(`${API_URL}/health`)
+            .then(r => r.json())
+            .then(d => showToast('✅ API Connected'))
+            .catch(() => showToast('⚠️ API Offline - Start backend first'));
+    </script>
+</body>
+
+</html>

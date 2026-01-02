@@ -1,0 +1,21 @@
+# Render Deployment Configuration
+# https://render.com/docs/yaml-spec
+
+services:
+  # Backend API
+  - type: web
+    name: fashionai-api
+    runtime: python
+    region: oregon
+    plan: free
+    buildCommand: |
+      pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.10"
+      - key: MODEL_PATH
+        value: "best.pt"
+    healthCheckPath: /health
+    autoDeploy: true
+    rootDir: backend

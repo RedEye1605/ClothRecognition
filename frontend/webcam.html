@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📹 Live Cloth Detection - Webcam</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0f0f1a;
+            color: white;
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(ellipse at 20% 20%, rgba(102, 126, 234, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(118, 75, 162, 0.15) 0%, transparent 50%);
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 20px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.1rem;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 900px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 24px;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .video-container {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #000;
+        }
+
+        #webcam,
+        #outputCanvas {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+            display: block;
+            border-radius: 12px;
+        }
+
+        #webcam {
+            display: none;
+        }
+
+        #outputCanvas {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            flex: 1;
+            min-width: 140px;
+            padding: 14px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f87171, #ef4444);
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .status-bar {
+            margin-top: 16px;
+            padding: 12px 16px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ef4444;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.active {
+            background: #4ade80;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .settings {
+            margin-top: 20px;
+        }
+
+        .setting-group {
+            margin-bottom: 16px;
+        }
+
+        .setting-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            cursor: pointer;
+        }
+
+        .detections-panel {
+            max-height: 350px;
+            overflow-y: auto;
+        }
+
+        .detection-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .detection-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .detection-name {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .detection-conf {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.6);
+            background: rgba(102, 126, 234, 0.2);
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 4px;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+
+        .back-link:hover {
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .empty-state span {
+            font-size: 3rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Image Upload</a>
+
+        <header>
+            <h1>📹 Live Cloth Detection</h1>
+            <p class="subtitle">Real-time clothing detection using your webcam and YOLOv8</p>
+        </header>
+
+        <main class="main-grid">
+            <!-- Left: Camera -->
+            <div class="card">
+                <h2 class="card-title"><span>🎥</span> Camera Feed</h2>
+
+                <div class="video-container">
+                    <video id="webcam" autoplay playsinline muted></video>
+                    <canvas id="outputCanvas"></canvas>
+                </div>
+
+                <div class="controls">
+                    <button class="btn btn-primary" id="startBtn">
+                        <span>▶️</span> Start Camera
+                    </button>
+                    <button class="btn btn-danger" id="stopBtn" disabled>
+                        <span>⏹️</span> Stop
+                    </button>
+                </div>
+
+                <div class="status-bar">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div class="status-dot" id="statusDot"></div>
+                        <span id="statusText">Camera not started</span>
+                    </div>
+                    <span id="fpsCounter">0 FPS</span>
+                </div>
+
+                <div class="settings">
+                    <div class="setting-group">
+                        <div class="setting-label">
+                            <span>🎯 Confidence</span>
+                            <span id="confValue">25%</span>
+                        </div>
+                        <input type="range" class="slider" id="confSlider" min="10" max="90" value="25">
+                    </div>
+                    <div class="setting-group">
+                        <div class="setting-label">
+                            <span>⏱️ Detection Interval</span>
+                            <span id="intervalValue">500ms</span>
+                        </div>
+                        <input type="range" class="slider" id="intervalSlider" min="100" max="2000" value="500"
+                            step="100">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Results -->
+            <div class="card">
+                <h2 class="card-title"><span>📊</span> Live Results</h2>
+
+                <div class="stats">
+                    <div class="stat-box">
+                        <div class="stat-value" id="totalItems">0</div>
+                        <div class="stat-label">Items</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="avgConf">0%</div>
+                        <div class="stat-label">Avg Conf</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="frameCount">0</div>
+                        <div class="stat-label">Frames</div>
+                    </div>
+                </div>
+
+                <h3 class="card-title" style="font-size: 1rem;"><span>👕</span> Detected Items</h3>
+
+                <div class="detections-panel" id="detectionsPanel">
+                    <div class="empty-state">
+                        <span>📷</span>
+                        <p>Start camera to see live detections</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // =========================================
+        // Configuration
+        // =========================================
+        const API_URL = 'http://localhost:8000';
+
+        const CLASS_COLORS = {
+            'shirt': '#FF6B6B', 'pants': '#4ECDC4', 'dress': '#45B7D1',
+            'jacket': '#96CEB4', 'skirt': '#FFEAA7', 'sweater': '#DDA0DD',
+            'shorts': '#98D8C8', 'coat': '#F7DC6F', 'hat': '#BB8FCE',
+            'shoes': '#85C1E9', 'bag': '#F8B500', 'sunglass': '#E056FD'
+        };
+
+        // =========================================
+        // DOM Elements
+        // =========================================
+        const webcam = document.getElementById('webcam');
+        const canvas = document.getElementById('outputCanvas');
+        const ctx = canvas.getContext('2d');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const fpsCounter = document.getElementById('fpsCounter');
+        const confSlider = document.getElementById('confSlider');
+        const confValue = document.getElementById('confValue');
+        const intervalSlider = document.getElementById('intervalSlider');
+        const intervalValue = document.getElementById('intervalValue');
+        const detectionsPanel = document.getElementById('detectionsPanel');
+        const totalItems = document.getElementById('totalItems');
+        const avgConf = document.getElementById('avgConf');
+        const frameCount = document.getElementById('frameCount');
+
+        // =========================================
+        // State
+        // =========================================
+        let stream = null;
+        let isRunning = false;
+        let detectionInterval = null;
+        let frameCounter = 0;
+        let lastTime = Date.now();
+        let fps = 0;
+
+        // =========================================
+        // Event Listeners
+        // =========================================
+        startBtn.addEventListener('click', startCamera);
+        stopBtn.addEventListener('click', stopCamera);
+
+        confSlider.addEventListener('input', e => {
+            confValue.textContent = e.target.value + '%';
+        });
+
+        intervalSlider.addEventListener('input', e => {
+            intervalValue.textContent = e.target.value + 'ms';
+            if (isRunning) {
+                clearInterval(detectionInterval);
+                detectionInterval = setInterval(detectFrame, parseInt(e.target.value));
+            }
+        });
+
+        // =========================================
+        // Camera Functions
+        // =========================================
+        async function startCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'user', width: 640, height: 480 }
+                });
+
+                webcam.srcObject = stream;
+                await webcam.play();
+
+                // Set canvas size
+                canvas.width = webcam.videoWidth;
+                canvas.height = webcam.videoHeight;
+
+                isRunning = true;
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+                statusDot.classList.add('active');
+                statusText.textContent = 'Camera running - detecting...';
+
+                // Start detection loop
+                const interval = parseInt(intervalSlider.value);
+                detectionInterval = setInterval(detectFrame, interval);
+
+                // FPS counter
+                setInterval(updateFPS, 1000);
+
+            } catch (err) {
+                console.error('Camera error:', err);
+                statusText.textContent = 'Error: ' + err.message;
+            }
+        }
+
+        function stopCamera() {
+            isRunning = false;
+
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+
+            if (detectionInterval) {
+                clearInterval(detectionInterval);
+                detectionInterval = null;
+            }
+
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            statusDot.classList.remove('active');
+            statusText.textContent = 'Camera stopped';
+
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // =========================================
+        // Detection
+        // =========================================
+        async function detectFrame() {
+            if (!isRunning) return;
+
+            try {
+                // Draw current frame to canvas
+                ctx.drawImage(webcam, 0, 0, canvas.width, canvas.height);
+
+                // Convert to blob
+                const blob = await new Promise(resolve => {
+                    canvas.toBlob(resolve, 'image/jpeg', 0.8);
+                });
+
+                // Send to API
+                const formData = new FormData();
+                formData.append('file', blob, 'frame.jpg');
+
+                const confidence = confSlider.value / 100;
+                const response = await fetch(`${API_URL}/detect?confidence=${confidence}&include_image=false`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error('API error');
+
+                const data = await response.json();
+
+                // Draw detections
+                drawDetections(data.detections);
+
+                // Update UI
+                updateStats(data.detections);
+                updateDetectionsList(data.detections);
+
+                frameCounter++;
+                frameCount.textContent = frameCounter;
+
+            } catch (err) {
+                console.error('Detection error:', err);
+            }
+        }
+
+        function drawDetections(detections) {
+            // Redraw video frame
+            ctx.drawImage(webcam, 0, 0, canvas.width, canvas.height);
+
+            detections.forEach(det => {
+                const [x1, y1, x2, y2] = det.bbox;
+                const color = CLASS_COLORS[det.class_name.toLowerCase()] || '#FFFFFF';
+
+                // Draw box
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 3;
+                ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+
+                // Draw label background
+                const label = `${det.class_name} ${Math.round(det.confidence * 100)}%`;
+                ctx.font = 'bold 14px Inter, sans-serif';
+                const textWidth = ctx.measureText(label).width + 10;
+
+                ctx.fillStyle = color;
+                ctx.fillRect(x1, y1 - 24, textWidth, 24);
+
+                // Draw label text
+                ctx.fillStyle = '#000';
+                ctx.fillText(label, x1 + 5, y1 - 7);
+            });
+        }
+
+        function updateStats(detections) {
+            totalItems.textContent = detections.length;
+
+            if (detections.length > 0) {
+                const avg = detections.reduce((sum, d) => sum + d.confidence, 0) / detections.length;
+                avgConf.textContent = Math.round(avg * 100) + '%';
+            } else {
+                avgConf.textContent = '0%';
+            }
+        }
+
+        function updateDetectionsList(detections) {
+            if (detections.length === 0) {
+                detectionsPanel.innerHTML = `
+                    <div class="empty-state">
+                        <span>👀</span>
+                        <p>No clothing detected</p>
+                    </div>
+                `;
+                return;
+            }
+
+            detectionsPanel.innerHTML = detections.map(det => {
+                const color = CLASS_COLORS[det.class_name.toLowerCase()] || '#FFFFFF';
+                return `
+                    <div class="detection-item">
+                        <div class="detection-color" style="background: ${color}"></div>
+                        <span class="detection-name">${det.class_name}</span>
+                        <span class="detection-conf">${Math.round(det.confidence * 100)}%</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateFPS() {
+            const now = Date.now();
+            fps = Math.round(1000 / (now - lastTime));
+            lastTime = now;
+            fpsCounter.textContent = fps + ' FPS';
+        }
+    </script>
+</body>
+
+</html>
