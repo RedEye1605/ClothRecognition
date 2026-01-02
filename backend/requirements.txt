@@ -1,0 +1,16 @@
+# FashionAI - Backend Requirements
+# For Render deployment
+
+# Core
+fastapi>=0.100.0
+uvicorn[standard]>=0.22.0
+python-multipart>=0.0.6
+
+# ML
+ultralytics>=8.0.0
+numpy>=1.24.0
+Pillow>=10.0.0
+opencv-python-headless>=4.8.0
+
+# Optional
+pydantic>=2.0.0
