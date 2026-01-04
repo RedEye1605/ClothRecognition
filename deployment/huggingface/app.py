@@ -657,19 +657,18 @@ with gr.Blocks(css=custom_css, theme=gr.themes.Base(), title="FashionAI - Cloth 
         with gr.Tab("📹 Live Camera", id="webcam"):
             gr.HTML("""
             <div style="text-align: center; padding: 16px; color: rgba(255,255,255,0.7);">
-                Point your camera at clothing items for real-time detection
+                Capture images from your camera for clothing detection
             </div>
             """)
             
             with gr.Row(equal_height=True):
                 with gr.Column(scale=1):
-                    gr.HTML("<div style='font-size: 16px; font-weight: 600; color: white; margin-bottom: 12px;'>📷 Camera Input</div>")
+                    gr.HTML("<div style='font-size: 16px; font-weight: 600; color: white; margin-bottom: 12px;'>📷 Camera Capture</div>")
                     cam_input = gr.Image(
                         sources=["webcam"], 
                         type="numpy", 
                         label="",
-                        height=400,
-                        streaming=True
+                        height=400
                     )
                     cam_conf = gr.Slider(
                         minimum=0.1, 
@@ -678,17 +677,19 @@ with gr.Blocks(css=custom_css, theme=gr.themes.Base(), title="FashionAI - Cloth 
                         step=0.05,
                         label="🎯 Confidence Threshold"
                     )
+                    cam_detect_btn = gr.Button("✨ Detect Clothing", variant="primary", size="lg")
                 
                 with gr.Column(scale=1):
-                    gr.HTML("<div style='font-size: 16px; font-weight: 600; color: white; margin-bottom: 12px;'>🎯 Live Detection</div>")
+                    gr.HTML("<div style='font-size: 16px; font-weight: 600; color: white; margin-bottom: 12px;'>🎯 Detection Results</div>")
                     cam_output = gr.Image(
                         type="numpy", 
                         label="",
                         height=400,
                         interactive=False
                     )
+                    cam_results_html = gr.HTML(value=create_empty_results())
             
-            cam_input.stream(detect_webcam, [cam_input, cam_conf], [cam_output], stream_every=0.1, time_limit=300, api_name="webcam_stream")
+            cam_detect_btn.click(detect_image, [cam_input, cam_conf], [cam_output, cam_results_html], api_name="detect_webcam_capture")
     
     # Class Tags
     gr.HTML("""
