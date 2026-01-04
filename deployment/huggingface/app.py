@@ -688,7 +688,7 @@ with gr.Blocks(css=custom_css, theme=gr.themes.Base(), title="FashionAI - Cloth 
                         interactive=False
                     )
             
-            cam_input.stream(detect_webcam, [cam_input, cam_conf], [cam_output], stream_every=0.1, time_limit=300)
+            cam_input.stream(detect_webcam, [cam_input, cam_conf], [cam_output], stream_every=0.1, time_limit=300, api_name="webcam_stream")
     
     # Class Tags
     gr.HTML("""
