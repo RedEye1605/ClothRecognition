@@ -1787,8 +1787,13 @@
             try {
                 elements.webcamLoading.classList.add('show');
 
-                // Simple constraints for better laptop compatibility
-                const constraints = { video: true, audio: false };
+                // Use facingMode from state for camera selection (front/back)
+                const constraints = {
+                    video: {
+                        facingMode: { ideal: state.facingMode }
+                    },
+                    audio: false
+                };
 
                 state.webcamStream = await navigator.mediaDevices.getUserMedia(constraints);
                 elements.webcamVideo.srcObject = state.webcamStream;
