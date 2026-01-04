@@ -20,38 +20,109 @@ except ImportError:
 # ============================================
 # Configuration
 # ============================================
-MODEL_PATH = "best.pt"
+DETECTION_MODEL_PATH = "cloth_classifier.pt"
+COLOR_MODEL_PATH = "color_classifier.pt"
 
 CLASS_CONFIG = {
-    "tshirt": {"color": "#f87171", "label": "T-Shirt", "icon": "👕"},
-    "t-shirt": {"color": "#f87171", "label": "T-Shirt", "icon": "👕"},
-    "dress": {"color": "#34d399", "label": "Dress", "icon": "👗"},
-    "jacket": {"color": "#60a5fa", "label": "Jacket", "icon": "🧥"},
-    "pants": {"color": "#a78bfa", "label": "Pants", "icon": "👖"},
-    "shirt": {"color": "#fbbf24", "label": "Shirt", "icon": "👔"},
-    "short": {"color": "#f472b6", "label": "Shorts", "icon": "🩳"},
-    "shorts": {"color": "#f472b6", "label": "Shorts", "icon": "🩳"},
-    "skirt": {"color": "#38bdf8", "label": "Skirt", "icon": "🎽"},
-    "sweater": {"color": "#fb923c", "label": "Sweater", "icon": "🧶"}
+    "tshirt": {"color": "#FF6B6B", "label": "T-Shirt", "icon": "👕"},
+    "t-shirt": {"color": "#FF6B6B", "label": "T-Shirt", "icon": "👕"},
+    "dress": {"color": "#45B7D1", "label": "Dress", "icon": "👗"},
+    "jacket": {"color": "#96CEB4", "label": "Jacket", "icon": "🧥"},
+    "pants": {"color": "#4ECDC4", "label": "Pants", "icon": "👖"},
+    "shirt": {"color": "#FFEAA7", "label": "Shirt", "icon": "👔"},
+    "short": {"color": "#98D8C8", "label": "Shorts", "icon": "🩳"},
+    "shorts": {"color": "#98D8C8", "label": "Shorts", "icon": "🩳"},
+    "skirt": {"color": "#DDA0DD", "label": "Skirt", "icon": "🎽"},
+    "sweater": {"color": "#F7DC6F", "label": "Sweater", "icon": "🧶"}
+}
+
+COLOR_CONFIG = {
+    "beige": {"hex": "#D4A574", "label": "Beige"},
+    "black": {"hex": "#2D2D2D", "label": "Black"},
+    "blue": {"hex": "#3B82F6", "label": "Blue"},
+    "gray": {"hex": "#6B7280", "label": "Gray"},
+    "grey": {"hex": "#6B7280", "label": "Gray"},
+    "green": {"hex": "#22C55E", "label": "Green"},
+    "pattren": {"hex": "#8B5CF6", "label": "Pattern"},
+    "pattern": {"hex": "#8B5CF6", "label": "Pattern"},
+    "red": {"hex": "#EF4444", "label": "Red"},
+    "white": {"hex": "#F9FAFB", "label": "White"}
 }
 
 CLASSES = ["T-Shirt", "Dress", "Jacket", "Pants", "Shirt", "Shorts", "Skirt", "Sweater"]
+COLORS = ["Beige", "Black", "Blue", "Gray", "Green", "Pattern", "Red", "White"]
 
 # ============================================
-# Load Model
+# Load Models
 # ============================================
-print("🔄 Loading model...")
+print("🔄 Loading detection model...")
 try:
-    model = YOLO(MODEL_PATH)
-    print(f"✅ Model loaded: {MODEL_PATH}")
-    model_status = "✅ Custom Model Loaded"
+    detection_model = YOLO(DETECTION_MODEL_PATH)
+    print(f"✅ Detection model loaded: {DETECTION_MODEL_PATH}")
+    detection_status = "✅ Detection Model Loaded"
 except Exception as e:
-    print(f"⚠️ Using pretrained model: {e}")
-    model = YOLO("yolov8n.pt")
-    model_status = "⚠️ Using Pretrained Model"
+    print(f"⚠️ Using pretrained detection model: {e}")
+    detection_model = YOLO("yolov8n.pt")
+    detection_status = "⚠️ Using Pretrained Detection Model"
 
-print(f"📋 Classes: {list(model.names.values())}")
+print(f"📋 Detection Classes: {list(detection_model.names.values())}")
 
+print("🔄 Loading color model...")
+try:
+    color_model = YOLO(COLOR_MODEL_PATH)
+    print(f"✅ Color model loaded: {COLOR_MODEL_PATH}")
+    color_status = "✅ Color Model Loaded"
+    print(f"🎨 Color Classes: {list(color_model.names.values())}")
+except Exception as e:
+    print(f"⚠️ Color model not available: {e}")
+    color_model = None
+    color_status = "⚠️ Color Model Not Available"
+
+def classify_color(image_crop):
+    """Classify color of a clothing crop using PIL Image"""
+    if color_model is None:
+        return None, 0.0, None
+    
+    try:
+        from PIL import Image
+        # Convert numpy array to PIL Image if needed
+        if isinstance(image_crop, np.ndarray):
+            image_crop = Image.fromarray(cv2.cvtColor(image_crop, cv2.COLOR_BGR2RGB))
+        
+        results = color_model.predict(image_crop, verbose=False)
+        probs = results[0].probs
+        
+        color_name = results[0].names[probs.top1]
+        color_conf = float(probs.top1conf)
+        color_hex = COLOR_CONFIG.get(color_name.lower(), {}).get("hex", "#808080")
+        
+        return color_name, color_conf, color_hex
+    except Exception as e:
+        print(f"⚠️ Color classification error: {e}")
+        return None, 0.0, None
+
+def format_label(color, class_name):
+    """Format label as 'Color ClassName' with proper display names."""
+    # Mapping model output to display names
+    class_mapping = {
+        "tshirt": "T-Shirt",
+        "t-shirt": "T-Shirt",
+        "dress": "Dress",
+        "jacket": "Jacket",
+        "pants": "Pants",
+        "shirt": "Shirt",
+        "short": "Shorts",
+        "shorts": "Shorts",
+        "skirt": "Skirt",
+        "sweater": "Sweater"
+    }
+    
+    display_class = class_mapping.get(class_name.lower(), class_name.title())
+    
+    if color:
+        color_display = "Pattern" if color.lower() == "pattren" else color.capitalize()
+        return f"{color_display} {display_class}"
+    return display_class
 # ============================================
 # Detection Functions
 # ============================================
@@ -61,21 +132,17 @@ def hex_to_bgr(hex_color):
     rgb = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
     return (rgb[2], rgb[1], rgb[0])
 
-def draw_custom_boxes(image, results):
-    """Draw custom styled bounding boxes"""
+def draw_custom_boxes(image, detections):
+    """Draw custom styled bounding boxes with color labels"""
     annotated = image.copy()
     
-    for box in results[0].boxes:
-        cls_id = int(box.cls[0])
-        cls_name = results[0].names[cls_id].lower()
-        conf = float(box.conf[0])
-        x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
+    for det in detections:
+        x1, y1, x2, y2 = det['bbox']
+        color_hex = det.get('colorHex') or det['classColor']
+        color = hex_to_bgr(color_hex)
+        label = det['label']
         
-        config = CLASS_CONFIG.get(cls_name, {"color": "#888888", "label": cls_name})
-        color = hex_to_bgr(config["color"])
-        label = f"{config['label']} {conf:.0%}"
-        
-        # Draw bounding box with rounded corners effect
+        # Draw bounding box
         cv2.rectangle(annotated, (x1, y1), (x2, y2), color, 3)
         
         # Label background
@@ -85,31 +152,106 @@ def draw_custom_boxes(image, results):
         (text_w, text_h), baseline = cv2.getTextSize(label, font, font_scale, thickness)
         
         cv2.rectangle(annotated, (x1, y1 - text_h - 15), (x1 + text_w + 10, y1), color, -1)
-        cv2.putText(annotated, label, (x1 + 5, y1 - 8), font, font_scale, (0, 0, 0), thickness)
+        
+        # Text color - white for dark backgrounds, black for light
+        text_color = (0, 0, 0) if det.get('color') in ['white', 'beige'] else (255, 255, 255)
+        cv2.putText(annotated, label, (x1 + 5, y1 - 8), font, font_scale, text_color, thickness)
     
     return annotated
 
 def detect_image(image, confidence):
-    """Detect clothing in uploaded image"""
+    """Detect clothing in uploaded image with color classification"""
     if image is None:
         return None, create_empty_results()
     
-    results = model.predict(image, conf=confidence, iou=0.45, verbose=False)
-    annotated = draw_custom_boxes(image, results)
+    # Stage 1: Detect clothing
+    results = detection_model.predict(image, conf=confidence, iou=0.45, verbose=False)
+    
+    # Stage 2: Classify color for each detection
+    detections = []
+    for box in results[0].boxes:
+        cls_id = int(box.cls[0])
+        cls_name = results[0].names[cls_id].lower()
+        conf = float(box.conf[0])
+        x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
+        
+        config = CLASS_CONFIG.get(cls_name, {"color": "#888888", "label": cls_name.title(), "icon": "👕"})
+        
+        # Classify color
+        color_name, color_conf, color_hex = None, 0.0, None
+        if color_model and (x2 - x1) > 10 and (y2 - y1) > 10:
+            # Ensure bounds
+            h, w = image.shape[:2]
+            cx1, cy1 = max(0, x1), max(0, y1)
+            cx2, cy2 = min(w, x2), min(h, y2)
+            crop = image[cy1:cy2, cx1:cx2]
+            color_name, color_conf, color_hex = classify_color(crop)
+        
+        display_label = format_label(color_name, config['label']) if color_name else config['label']
+        
+        detections.append({
+            'className': cls_name,
+            'classLabel': config['label'],
+            'classColor': config['color'],
+            'icon': config.get('icon', '👕'),
+            'confidence': conf,
+            'bbox': (x1, y1, x2, y2),
+            'color': color_name,
+            'colorConfidence': color_conf,
+            'colorHex': color_hex,
+            'label': f"{display_label} {conf:.0%}"
+        })
+    
+    # Draw boxes with color info
+    annotated = draw_custom_boxes(image, detections)
     annotated_rgb = cv2.cvtColor(annotated, cv2.COLOR_BGR2RGB) if len(annotated.shape) == 3 else annotated
     
     # Build results HTML
-    results_html = create_results_html(results)
+    results_html = create_results_html_v2(detections)
     
     return annotated_rgb, results_html
 
 def detect_webcam(frame, confidence):
-    """Process webcam frame"""
+    """Process webcam frame with color classification"""
     if frame is None:
         return None
     
-    results = model.predict(frame, conf=confidence, iou=0.45, verbose=False)
-    annotated = draw_custom_boxes(frame, results)
+    # Stage 1: Detect clothing
+    results = detection_model.predict(frame, conf=confidence, iou=0.45, verbose=False)
+    
+    # Stage 2: Classify color for each detection  
+    detections = []
+    for box in results[0].boxes:
+        cls_id = int(box.cls[0])
+        cls_name = results[0].names[cls_id].lower()
+        conf = float(box.conf[0])
+        x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
+        
+        config = CLASS_CONFIG.get(cls_name, {"color": "#888888", "label": cls_name.title()})
+        
+        # Classify color
+        color_name, color_conf, color_hex = None, 0.0, None
+        if color_model and (x2 - x1) > 10 and (y2 - y1) > 10:
+            h, w = frame.shape[:2]
+            cx1, cy1 = max(0, x1), max(0, y1)
+            cx2, cy2 = min(w, x2), min(h, y2)
+            crop = frame[cy1:cy2, cx1:cx2]
+            color_name, color_conf, color_hex = classify_color(crop)
+        
+        display_label = format_label(color_name, config['label']) if color_name else config['label']
+        
+        detections.append({
+            'className': cls_name,
+            'classLabel': config['label'],
+            'classColor': config['color'],
+            'confidence': conf,
+            'bbox': (x1, y1, x2, y2),
+            'color': color_name,
+            'colorHex': color_hex,
+            'label': f"{display_label} {conf:.0%}"
+        })
+    
+    annotated = draw_custom_boxes(frame, detections)
     return annotated
 
 def create_empty_results():
@@ -166,6 +308,72 @@ def create_results_html(results):
                 <span style="font-weight: 600; color: white;">{det['label']}</span>
             </div>
             <span style="background: {det['color']}; color: #000; padding: 4px 10px; 
+                         border-radius: 20px; font-size: 13px; font-weight: 700;">
+                {det['confidence']:.0%}
+            </span>
+        </div>
+        """
+    
+    return f"""
+    <div style="padding: 16px;">
+        <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+            <div style="flex: 1; background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.2)); 
+                        padding: 16px; border-radius: 12px; text-align: center;">
+                <div style="font-size: 28px; font-weight: 800; color: #a78bfa;">{len(detections)}</div>
+                <div style="font-size: 12px; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 1px;">Items Found</div>
+            </div>
+            <div style="flex: 1; background: linear-gradient(135deg, rgba(34,197,94,0.2), rgba(16,185,129,0.2)); 
+                        padding: 16px; border-radius: 12px; text-align: center;">
+                <div style="font-size: 28px; font-weight: 800; color: #34d399;">{avg_conf:.0%}</div>
+                <div style="font-size: 12px; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 1px;">Avg Confidence</div>
+            </div>
+        </div>
+        
+        <div style="font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.7); 
+                    margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">
+            Detected Items
+        </div>
+        
+        {items_html}
+    </div>
+    """
+
+def create_results_html_v2(detections):
+    """Create styled results HTML with color info"""
+    if not detections:
+        return """
+        <div style="text-align: center; padding: 40px 20px; color: rgba(255,255,255,0.6);">
+            <div style="font-size: 40px; margin-bottom: 12px;">🔍</div>
+            <div style="font-size: 16px; font-weight: 600;">No clothing detected</div>
+            <div style="font-size: 13px; margin-top: 8px; color: rgba(255,255,255,0.4);">Try lowering the confidence threshold</div>
+        </div>
+        """
+    
+    total_conf = sum(d['confidence'] for d in detections)
+    avg_conf = total_conf / len(detections) if detections else 0
+    
+    # Build HTML
+    items_html = ""
+    for det in detections:
+        color_hex = det.get('colorHex') or det['classColor']
+        color_name = det.get('color', '')
+        display_label = det['label'].rsplit(' ', 1)[0]  # Remove the percentage from label
+        icon = det.get('icon', '👕')
+        
+        # Color swatch HTML
+        color_swatch = f'<span style="display: inline-block; width: 16px; height: 16px; background: {color_hex}; border-radius: 4px; box-shadow: 0 0 0 1px rgba(255,255,255,0.2);"></span>' if color_name else ''
+        
+        items_html += f"""
+        <div style="display: flex; align-items: center; justify-content: space-between; 
+                    padding: 12px 16px; background: rgba(255,255,255,0.05); 
+                    border-radius: 10px; margin-bottom: 8px;
+                    border-left: 3px solid {color_hex};">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 20px;">{icon}</span>
+                {color_swatch}
+                <span style="font-weight: 600; color: white;">{display_label}</span>
+            </div>
+            <span style="background: {color_hex}; color: {'#000' if color_name in ['white', 'beige'] else '#fff'}; padding: 4px 10px; 
                          border-radius: 20px; font-size: 13px; font-weight: 700;">
                 {det['confidence']:.0%}
             </span>
@@ -397,10 +605,11 @@ with gr.Blocks(css=custom_css, theme=gr.themes.Base(), title="FashionAI - Cloth 
     <div class="header-container">
         <div class="header-logo">👕</div>
         <div class="header-title">FashionAI</div>
-        <div class="header-subtitle">AI-powered clothing detection using YOLOv8 deep learning</div>
+        <div class="header-subtitle">AI-powered clothing detection with color classification using YOLOv8</div>
         
         <div class="feature-badges">
             <span class="feature-badge">🏷️ 8 Classes</span>
+            <span class="feature-badge">🎨 8 Colors</span>
             <span class="feature-badge">⚡ Real-time</span>
             <span class="feature-badge">📹 Webcam Support</span>
         </div>
@@ -483,15 +692,29 @@ with gr.Blocks(css=custom_css, theme=gr.themes.Base(), title="FashionAI - Cloth 
     
     # Class Tags
     gr.HTML("""
-    <div class="class-tags">
-        <span class="class-tag"><span class="class-dot" style="background: #f87171;"></span> T-Shirt</span>
-        <span class="class-tag"><span class="class-dot" style="background: #34d399;"></span> Dress</span>
-        <span class="class-tag"><span class="class-dot" style="background: #60a5fa;"></span> Jacket</span>
-        <span class="class-tag"><span class="class-dot" style="background: #a78bfa;"></span> Pants</span>
-        <span class="class-tag"><span class="class-dot" style="background: #fbbf24;"></span> Shirt</span>
-        <span class="class-tag"><span class="class-dot" style="background: #f472b6;"></span> Shorts</span>
-        <span class="class-tag"><span class="class-dot" style="background: #38bdf8;"></span> Skirt</span>
-        <span class="class-tag"><span class="class-dot" style="background: #fb923c;"></span> Sweater</span>
+    <div style="text-align: center; margin-top: 20px;">
+        <div style="font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 8px;">CLOTHING TYPES</div>
+        <div class="class-tags">
+            <span class="class-tag">T-Shirt</span>
+            <span class="class-tag">Dress</span>
+            <span class="class-tag">Jacket</span>
+            <span class="class-tag">Pants</span>
+            <span class="class-tag">Shirt</span>
+            <span class="class-tag">Shorts</span>
+            <span class="class-tag">Skirt</span>
+            <span class="class-tag">Sweater</span>
+        </div>
+        <div style="font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 16px; margin-bottom: 8px;">DETECTED COLORS</div>
+        <div class="class-tags">
+            <span class="class-tag"><span class="class-dot" style="background: #D4A574;"></span> Beige</span>
+            <span class="class-tag"><span class="class-dot" style="background: #2D2D2D;"></span> Black</span>
+            <span class="class-tag"><span class="class-dot" style="background: #3B82F6;"></span> Blue</span>
+            <span class="class-tag"><span class="class-dot" style="background: #6B7280;"></span> Gray</span>
+            <span class="class-tag"><span class="class-dot" style="background: #22C55E;"></span> Green</span>
+            <span class="class-tag"><span class="class-dot" style="background: #8B5CF6;"></span> Pattern</span>
+            <span class="class-tag"><span class="class-dot" style="background: #EF4444;"></span> Red</span>
+            <span class="class-tag"><span class="class-dot" style="background: #F9FAFB; border: 1px solid rgba(255,255,255,0.3);"></span> White</span>
+        </div>
     </div>
     """)
     
