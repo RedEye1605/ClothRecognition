@@ -86,8 +86,9 @@ def classify_color(image_crop):
     try:
         from PIL import Image
         # Convert numpy array to PIL Image if needed
+        # NOTE: Gradio provides RGB images, so no BGR2RGB conversion needed
         if isinstance(image_crop, np.ndarray):
-            image_crop = Image.fromarray(cv2.cvtColor(image_crop, cv2.COLOR_BGR2RGB))
+            image_crop = Image.fromarray(image_crop)
         
         results = color_model.predict(image_crop, verbose=False)
         probs = results[0].probs
@@ -204,12 +205,12 @@ def detect_image(image, confidence):
     
     # Draw boxes with color info
     annotated = draw_custom_boxes(image, detections)
-    annotated_rgb = cv2.cvtColor(annotated, cv2.COLOR_BGR2RGB) if len(annotated.shape) == 3 else annotated
+    # NOTE: No BGR2RGB conversion needed - Gradio input is already RGB
     
     # Build results HTML
     results_html = create_results_html_v2(detections)
     
-    return annotated_rgb, results_html
+    return annotated, results_html
 
 def detect_webcam(frame, confidence):
     """Process webcam frame with color classification"""
@@ -657,18 +658,19 @@ with gr.Blocks(css=custom_css, theme=gr.themes.Base(), title="FashionAI - Cloth 
         with gr.Tab("📹 Live Camera", id="webcam"):
             gr.HTML("""
             <div style="text-align: center; padding: 16px; color: rgba(255,255,255,0.7);">
-                Capture images from your camera for clothing detection
+                Point your camera at clothing items for real-time detection
             </div>
             """)
             
             with gr.Row(equal_height=True):
                 with gr.Column(scale=1):
-                    gr.HTML("<div style='font-size: 16px; font-weight: 600; color: white; margin-bottom: 12px;'>📷 Camera Capture</div>")
+                    gr.HTML("<div style='font-size: 16px; font-weight: 600; color: white; margin-bottom: 12px;'>📷 Camera Input</div>")
                     cam_input = gr.Image(
                         sources=["webcam"], 
                         type="numpy", 
                         label="",
-                        height=400
+                        height=400,
+                        streaming=True
                     )
                     cam_conf = gr.Slider(
                         minimum=0.1, 
@@ -677,19 +679,17 @@ with gr.Blocks(css=custom_css, theme=gr.themes.Base(), title="FashionAI - Cloth 
                         step=0.05,
                         label="🎯 Confidence Threshold"
                     )
-                    cam_detect_btn = gr.Button("✨ Detect Clothing", variant="primary", size="lg")
                 
                 with gr.Column(scale=1):
-                    gr.HTML("<div style='font-size: 16px; font-weight: 600; color: white; margin-bottom: 12px;'>🎯 Detection Results</div>")
+                    gr.HTML("<div style='font-size: 16px; font-weight: 600; color: white; margin-bottom: 12px;'>🎯 Live Detection</div>")
                     cam_output = gr.Image(
                         type="numpy", 
                         label="",
                         height=400,
                         interactive=False
                     )
-                    cam_results_html = gr.HTML(value=create_empty_results())
             
-            cam_detect_btn.click(detect_image, [cam_input, cam_conf], [cam_output, cam_results_html], api_name="detect_webcam_capture")
+            cam_input.stream(detect_webcam, [cam_input, cam_conf], [cam_output], stream_every=0.1, time_limit=300, api_name="webcam_stream")
     
     # Class Tags
     gr.HTML("""
