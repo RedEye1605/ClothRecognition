@@ -650,8 +650,8 @@ with gr.Blocks(css=custom_css, theme=gr.themes.Base(), title="FashionAI - Cloth 
                     )
                     results_html = gr.HTML(value=create_empty_results())
             
-            detect_btn.click(detect_image, [img_input, conf_slider], [img_output, results_html])
-            img_input.change(detect_image, [img_input, conf_slider], [img_output, results_html])
+            detect_btn.click(detect_image, [img_input, conf_slider], [img_output, results_html], api_name="detect_image_upload")
+            img_input.change(detect_image, [img_input, conf_slider], [img_output, results_html], api_name="change_image_upload")
         
         # Webcam Tab
         with gr.Tab("📹 Live Camera", id="webcam"):

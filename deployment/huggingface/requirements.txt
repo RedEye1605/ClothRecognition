@@ -1,6 +1,8 @@
 # FashionAI - Hugging Face Requirements
 
+gradio>=4.44.1
 ultralytics>=8.0.0
 numpy>=1.24.0
 Pillow>=10.0.0
 opencv-python-headless>=4.8.0
+
