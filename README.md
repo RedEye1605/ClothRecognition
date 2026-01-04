@@ -1,42 +1,24 @@
-# 👕 FashionAI - Cloth Recognition System
+# 👕 FashionAI - Cloth Recognition
 
 AI-powered clothing detection using **YOLOv8**.
 
-![Python](https://img.shields.io/badge/Python-3.10+-blue)
-![YOLOv8](https://img.shields.io/badge/YOLOv8-Ultralytics-purple)
-![FastAPI](https://img.shields.io/badge/FastAPI-Backend-green)
-![License](https://img.shields.io/badge/License-MIT-yellow)
-
 ## ✨ Features
 
-- 🎯 **8 Clothing Classes**: Tshirt, Dress, Jacket, Pants, Shirt, Short, Skirt, Sweater
-- 📸 **Image Upload**: Drag & drop or click to upload
-- 📹 **Live Webcam**: Real-time detection from camera
-- ⚡ **Fast Inference**: YOLOv8n optimized for speed
-- 🎨 **Modern UI**: Dark theme with premium design
-
-## 🏷️ Detectable Classes
-
-| Class | Color |
-|-------|-------|
-| Tshirt | 🔴 Red |
-| Dress | 🔵 Blue |
-| Jacket | 🟢 Green |
-| Pants | 🩵 Teal |
-| Shirt | 🟡 Yellow |
-| Short | 🟩 Mint |
-| Skirt | 🟣 Purple |
-| Sweater | 🟠 Gold |
+- 🎯 **8 Classes**: Tshirt, Dress, Jacket, Pants, Shirt, Short, Skirt, Sweater
+- 📸 **Image Upload**: Drag & drop detection
+- ⚡ **Fast**: YOLOv8n optimized for speed
+- 🌐 **Web UI**: Modern dark theme
 
 ## 🚀 Quick Start
 
 ### 1. Install Dependencies
 ```bash
+cd backend
 pip install -r requirements.txt
 ```
 
 ### 2. Add Model
-Place your trained `best.pt` in the `models/` folder.
+Place trained `best.pt` in `models/` folder.
 
 ### 3. Run Backend
 ```bash
@@ -45,73 +27,55 @@ uvicorn main:app --reload --port 8000
 ```
 
 ### 4. Open Frontend
-Open `frontend/index.html` in your browser.
+Open `frontend/index.html` in browser.
 
-## 📁 Project Structure
+## 📁 Structure
 
 ```
 cloth-recognition-yolo/
 ├── backend/
-│   ├── main.py              # FastAPI server
-│   └── requirements.txt     # Python dependencies
+│   ├── main.py           # FastAPI server
+│   └── requirements.txt
 ├── frontend/
-│   └── index.html           # Web UI
+│   └── index.html        # Web UI
 ├── models/
-│   └── best.pt              # Trained model (add after training)
+│   └── best.pt           # Trained model
 ├── notebooks/
-│   └── cloth_detection_training.ipynb  # Colab training
-├── deployment/
-│   └── huggingface/         # HuggingFace Spaces files
-└── render.yaml              # Render deployment config
+│   └── cloth_detection_training.ipynb
+└── deployment/
+    └── huggingface/      # HuggingFace files
 ```
 
 ## 🎓 Training
 
 1. Open `notebooks/cloth_detection_training.ipynb` in Google Colab
 2. Run all cells (uses T4 GPU)
-3. Download `best.pt` after training
+3. Download `best.pt`
 4. Place in `models/` folder
 
 ## 🌐 Deployment
 
-### Render (Backend)
-```bash
-# Push to GitHub, then:
-# 1. Connect repo to render.com
-# 2. Use render.yaml for auto-config
-```
+### Hugging Face Spaces
+Upload files from `deployment/huggingface/` to HuggingFace Spaces:
+1. Create new Space (Gradio SDK)
+2. Upload `app.py`, `requirements.txt`, `best.pt`, `README.md` from `deployment/huggingface/`
+3. Your app will be live at `https://huggingface.co/spaces/your-username/your-space`
 
-### Vercel (Frontend)
-```bash
-# 1. Update API_URL in index.html
-# 2. Deploy frontend/ to Vercel
-```
+## 📡 API
 
-### Hugging Face (All-in-One)
-```bash
-# Upload to HuggingFace Spaces:
-# - deployment/huggingface/app.py
-# - deployment/huggingface/requirements.txt
-# - best.pt
-```
-
-## 📡 API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/` | Welcome message |
-| GET | `/health` | Health check |
-| GET | `/classes` | List classes |
-| POST | `/detect` | Detect clothing |
-| POST | `/detect/batch` | Batch detection |
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/health` | GET | Health check |
+| `/detect` | POST | Detect clothing |
+| `/classes` | GET | List classes |
 
 ## 🛠️ Tech Stack
 
-- **ML**: YOLOv8 (Ultralytics), PyTorch
-- **Backend**: FastAPI, Uvicorn
-- **Frontend**: HTML, CSS, JavaScript
-- **Deployment**: Render, Vercel, HuggingFace
+- YOLOv8, PyTorch
+- FastAPI, Uvicorn
+- HTML, CSS, JavaScript
+- Gradio (HuggingFace)
 
 ## 📄 License
 
-MIT License - Free to use and modify.
+MIT

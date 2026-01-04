@@ -91,7 +91,7 @@ app.add_middleware(
 # ============================================
 class Detection(BaseModel):
     """Single detection result"""
-    class_name: str = "Tshirt"
+    className: str = "Tshirt"
     confidence: float = 0.95
     bbox: List[float] = [100, 100, 200, 200]  # [x1, y1, x2, y2]
 
@@ -198,14 +198,20 @@ async def detect_clothing(
     if model is None:
         raise HTTPException(status_code=503, detail="Model not loaded")
     
-    # Validate file type
-    if not file.content_type or not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="File must be an image")
-    
     try:
-        # Read and process image
+        # Read file contents
         contents = await file.read()
-        image = Image.open(io.BytesIO(contents)).convert("RGB")
+        
+        if len(contents) == 0:
+            raise HTTPException(status_code=400, detail="Empty file")
+        
+        # Try to open as image
+        try:
+            image = Image.open(io.BytesIO(contents))
+            image = image.convert("RGB")
+        except Exception as img_error:
+            raise HTTPException(status_code=400, detail=f"Invalid image: {str(img_error)}")
+        
         image_np = np.array(image)
         
         # Run inference
@@ -216,17 +222,18 @@ async def detect_clothing(
         
         # Parse results
         detections = []
-        for box in results[0].boxes:
-            cls_id = int(box.cls[0])
-            cls_name = results[0].names[cls_id]
-            conf = float(box.conf[0])
-            bbox = box.xyxy[0].tolist()  # [x1, y1, x2, y2]
-            
-            detections.append({
-                "class": cls_name,
-                "confidence": round(conf, 4),
-                "bbox": [round(x, 2) for x in bbox]
-            })
+        if len(results) > 0 and len(results[0].boxes) > 0:
+            for box in results[0].boxes:
+                cls_id = int(box.cls[0])
+                cls_name = results[0].names[cls_id]
+                conf = float(box.conf[0])
+                bbox = box.xyxy[0].tolist()  # [x1, y1, x2, y2]
+                
+                detections.append({
+                    "className": cls_name,
+                    "confidence": round(conf, 4),
+                    "bbox": [round(x, 2) for x in bbox]
+                })
         
         return {
             "success": True,
@@ -236,7 +243,12 @@ async def detect_clothing(
             "model_name": "YOLOv8"
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
+        print(f"❌ Detection error: {str(e)}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Detection error: {str(e)}")
 
 @app.post("/detect/batch", tags=["Detection"])
@@ -275,7 +287,7 @@ async def detect_batch(
                 bbox = box.xyxy[0].tolist()
                 
                 detections.append({
-                    "class": cls_name,
+                    "className": cls_name,
                     "confidence": round(conf, 4),
                     "bbox": [round(x, 2) for x in bbox]
                 })
