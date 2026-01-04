@@ -1000,6 +1000,19 @@
             flex-shrink: 0;
         }
 
+        .detection-item__icon {
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .detection-item__color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            flex-shrink: 0;
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
+        }
+
         .detection-item__name {
             flex: 1;
             font-weight: 600;
@@ -1280,6 +1293,10 @@
                     8 Classes
                 </span>
                 <span class="feature-badge">
+                    <span class="material-icons-outlined">palette</span>
+                    8 Colors
+                </span>
+                <span class="feature-badge">
                     <span class="material-icons-outlined">bolt</span>
                     Real-time
                 </span>
@@ -1412,7 +1429,16 @@
                         <span class="material-icons-outlined" style="font-size: 16px;">sell</span>
                         Supported Classes
                     </h3>
-                    <div class="class-tags stagger-children" id="classTags"></div>
+                    <div class="class-tags stagger-children" id="classTags">
+                        <div class="class-tag">T-Shirt</div>
+                        <div class="class-tag">Dress</div>
+                        <div class="class-tag">Jacket</div>
+                        <div class="class-tag">Pants</div>
+                        <div class="class-tag">Shirt</div>
+                        <div class="class-tag">Shorts</div>
+                        <div class="class-tag">Skirt</div>
+                        <div class="class-tag">Sweater</div>
+                    </div>
                 </div>
             </section>
 
@@ -1500,19 +1526,34 @@
         const API_URL = 'http://127.0.0.1:8000';
 
         const CLASS_CONFIG = {
-            'tshirt': { color: '#f87171', label: 'T-Shirt' },
-            't-shirt': { color: '#f87171', label: 'T-Shirt' },
-            'dress': { color: '#34d399', label: 'Dress' },
-            'jacket': { color: '#60a5fa', label: 'Jacket' },
-            'pants': { color: '#a78bfa', label: 'Pants' },
-            'shirt': { color: '#fbbf24', label: 'Shirt' },
-            'short': { color: '#f472b6', label: 'Shorts' },
-            'shorts': { color: '#f472b6', label: 'Shorts' },
-            'skirt': { color: '#38bdf8', label: 'Skirt' },
-            'sweater': { color: '#fb923c', label: 'Sweater' }
+            'tshirt': { color: '#FF6B6B', label: 'T-Shirt', icon: '👕' },
+            't-shirt': { color: '#FF6B6B', label: 'T-Shirt', icon: '👕' },
+            'dress': { color: '#45B7D1', label: 'Dress', icon: '👗' },
+            'jacket': { color: '#96CEB4', label: 'Jacket', icon: '🧥' },
+            'pants': { color: '#4ECDC4', label: 'Pants', icon: '👖' },
+            'shirt': { color: '#FFEAA7', label: 'Shirt', icon: '👔' },
+            'short': { color: '#98D8C8', label: 'Shorts', icon: '🩳' },
+            'shorts': { color: '#98D8C8', label: 'Shorts', icon: '🩳' },
+            'skirt': { color: '#DDA0DD', label: 'Skirt', icon: '🎽' },
+            'sweater': { color: '#F7DC6F', label: 'Sweater', icon: '🧶' }
         };
 
-        const CLASSES = ['Tshirt', 'Dress', 'Jacket', 'Pants', 'Shirt', 'Short', 'Skirt', 'Sweater'];
+        // Color configuration for detected clothing colors
+        const COLOR_CONFIG = {
+            'beige': { hex: '#D4A574', label: 'Beige' },
+            'black': { hex: '#2D2D2D', label: 'Black' },
+            'blue': { hex: '#3B82F6', label: 'Blue' },
+            'gray': { hex: '#6B7280', label: 'Gray' },
+            'grey': { hex: '#6B7280', label: 'Gray' },
+            'green': { hex: '#22C55E', label: 'Green' },
+            'pattren': { hex: '#8B5CF6', label: 'Pattern' },
+            'pattern': { hex: '#8B5CF6', label: 'Pattern' },
+            'red': { hex: '#EF4444', label: 'Red' },
+            'white': { hex: '#F9FAFB', label: 'White' }
+        };
+
+        const CLASSES = ['T-Shirt', 'Dress', 'Jacket', 'Pants', 'Shirt', 'Shorts', 'Skirt', 'Sweater'];
+        const COLORS = ['Beige', 'Black', 'Blue', 'Gray', 'Green', 'Pattern', 'Red', 'White'];
 
         // ============================================
         // DOM Elements
@@ -2020,23 +2061,27 @@
                 const clsName = det.class_name || det.className || det['class'] || 'unknown';
                 const config = CLASS_CONFIG[clsName.toLowerCase()] || { color: '#888', label: clsName };
 
-                // Bounding box
-                ctx.strokeStyle = config.color;
+                // Use label from API if available (includes color, e.g., "Blue Tshirt")
+                const displayLabel = det.label || config.label;
+
+                // Bounding box - use colorHex if available for clothing color
+                const boxColor = det.colorHex || config.color;
+                ctx.strokeStyle = boxColor;
                 ctx.lineWidth = 3;
                 ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
 
                 // Label background
-                const label = `${config.label} ${(det.confidence * 100).toFixed(0)}%`;
+                const label = `${displayLabel} ${(det.confidence * 100).toFixed(0)}%`;
                 ctx.font = 'bold 14px Inter';
                 const labelWidth = ctx.measureText(label).width + 16;
 
-                ctx.fillStyle = config.color;
+                ctx.fillStyle = boxColor;
                 ctx.beginPath();
                 ctx.roundRect(x1, y1 - 28, labelWidth, 24, 4);
                 ctx.fill();
 
                 // Label text
-                ctx.fillStyle = '#000';
+                ctx.fillStyle = (det.color === 'white' || det.color === 'beige') ? '#000' : '#fff';
                 ctx.fillText(label, x1 + 8, y1 - 10);
             });
 
@@ -2052,12 +2097,16 @@
             // Render detection list (without animation for smooth live updates)
             elements.detectionList.innerHTML = data.detections.map(det => {
                 const clsName = det.class_name || det.className || det['class'] || 'unknown';
-                const config = CLASS_CONFIG[clsName.toLowerCase()] || { color: '#888', label: clsName };
+                const config = CLASS_CONFIG[clsName.toLowerCase()] || { color: '#888', label: clsName, icon: '👕' };
+                const displayLabel = det.label || config.label;
+                const colorHex = det.colorHex || config.color;
+                const icon = config.icon || '👕';
 
                 return `
                     <div class="detection-item">
-                        <span class="detection-item__indicator" style="background: ${config.color}"></span>
-                        <span class="detection-item__name">${config.label}</span>
+                        <span class="detection-item__icon">${icon}</span>
+                        <span class="detection-item__color" style="background: ${colorHex}" title="${det.color || 'N/A'}"></span>
+                        <span class="detection-item__name">${displayLabel}</span>
                         <span class="detection-item__confidence">${(det.confidence * 100).toFixed(0)}%</span>
                     </div>
                 `;
@@ -2083,23 +2132,27 @@
                     const clsName = det.class_name || det.className || det['class'] || 'unknown';
                     const config = CLASS_CONFIG[clsName.toLowerCase()] || { color: '#888', label: clsName };
 
-                    // Bounding box
-                    ctx.strokeStyle = config.color;
+                    // Use label from API if available (includes color, e.g., "Blue Tshirt")
+                    const displayLabel = det.label || config.label;
+
+                    // Bounding box - use colorHex if available for clothing color
+                    const boxColor = det.colorHex || config.color;
+                    ctx.strokeStyle = boxColor;
                     ctx.lineWidth = 3;
                     ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
 
                     // Label background
-                    const label = `${config.label} ${(det.confidence * 100).toFixed(0)}%`;
+                    const label = `${displayLabel} ${(det.confidence * 100).toFixed(0)}%`;
                     ctx.font = 'bold 14px Inter';
                     const labelWidth = ctx.measureText(label).width + 16;
 
-                    ctx.fillStyle = config.color;
+                    ctx.fillStyle = boxColor;
                     ctx.beginPath();
                     ctx.roundRect(x1, y1 - 28, labelWidth, 24, 4);
                     ctx.fill();
 
-                    // Label text
-                    ctx.fillStyle = '#000';
+                    // Label text - use white for dark colors, black for light colors
+                    ctx.fillStyle = (det.color === 'white' || det.color === 'beige') ? '#000' : '#fff';
                     ctx.fillText(label, x1 + 8, y1 - 10);
                 });
             };
@@ -2117,12 +2170,16 @@
             // Render detection list
             elements.detectionList.innerHTML = data.detections.map(det => {
                 const clsName = det.class_name || det.className || det['class'] || 'unknown';
-                const config = CLASS_CONFIG[clsName.toLowerCase()] || { color: '#888', label: clsName };
+                const config = CLASS_CONFIG[clsName.toLowerCase()] || { color: '#888', label: clsName, icon: '👕' };
+                const displayLabel = det.label || config.label;
+                const colorHex = det.colorHex || config.color;
+                const icon = config.icon || '👕';
 
                 return `
                     <div class="detection-item animate-slide-in">
-                        <span class="detection-item__indicator" style="background: ${config.color}"></span>
-                        <span class="detection-item__name">${config.label}</span>
+                        <span class="detection-item__icon">${icon}</span>
+                        <span class="detection-item__color" style="background: ${colorHex}" title="${det.color || 'N/A'}"></span>
+                        <span class="detection-item__name">${displayLabel}</span>
                         <span class="detection-item__confidence">${(det.confidence * 100).toFixed(0)}%</span>
                     </div>
                 `;

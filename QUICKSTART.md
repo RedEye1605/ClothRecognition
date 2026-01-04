@@ -1,133 +1,88 @@
-# 🚀 Quick Start Guide - Cloth Recognition
+# 🚀 FashionAI Quick Start
 
-## ⚡ Langkah Cepat (5 Menit Setup)
+Get the FashionAI cloth recognition system up and running in 5 minutes.
 
-### 1️⃣ Install Dependencies
+## Prerequisites
+
+- Python 3.9+
+- pip
+
+## Step 1: Clone and Setup
 
 ```bash
+# Navigate to project
 cd cloth-recognition-yolo
+
+# Create virtual environment (recommended)
+python -m venv .venv
+.venv\Scripts\activate  # Windows
+# source .venv/bin/activate  # Linux/Mac
+
+# Install dependencies
+cd backend
 pip install -r requirements.txt
 ```
 
-### 2️⃣ Training di Google Colab
+## Step 2: Add Models
 
-1. **Upload notebook** ke Google Colab:
-   - File: `notebooks/cloth_detection_training.ipynb`
+Download or copy models to `models/` folder:
+- `cloth_classifier.pt` - Clothing detection (YOLOv8)
+- `color_classifier.pt` - Color classification (YOLOv8-cls)
 
-2. **Aktifkan GPU**:
-   - `Runtime` → `Change runtime type` → `GPU (T4)`
-
-3. **Jalankan semua cell** dan tunggu training selesai
-
-4. **Download model** (`best.pt`) yang sudah trained
-
-### 3️⃣ Test Model Lokal
-
-```bash
-# Copy model ke folder models/
-mkdir models
-# Copy best.pt ke models/
-
-# Jalankan prediction
-python src/inference/predict.py --image path/to/image.jpg --model models/best.pt
-```
-
-### 4️⃣ Jalankan Backend API
+## Step 3: Start Backend
 
 ```bash
 cd backend
-uvicorn main:app --reload --port 8000
-
-# API tersedia di: http://localhost:8000
-# Docs: http://localhost:8000/docs
+uvicorn app.main:app --reload --port 8000
 ```
 
-### 5️⃣ Buka Frontend
+You should see:
+```
+🔄 Loading detection model from: .../models/cloth_classifier.pt
+✅ Detection model loaded: cloth_classifier.pt
+🔄 Loading color model from: .../models/color_classifier.pt
+✅ Color model loaded: color_classifier.pt
+🚀 FashionAI API v3.0.0 starting...
+```
+
+## Step 4: Start Frontend
+
+Open new terminal:
+```bash
+cd frontend
+python -m http.server 5500
+```
+
+## Step 5: Open in Browser
+
+Go to: http://127.0.0.1:5500
+
+## Test the API
 
 ```bash
-# Buka di browser
-start frontend/index.html
+# Health check
+curl http://127.0.0.1:8000/health
+
+# List classes
+curl http://127.0.0.1:8000/classes
 ```
 
----
+## Troubleshooting
 
-## 🎯 Workflow Lengkap
+**Models not loading?**
+- Check `models/` folder has both `.pt` files
+- Verify file names are correct
 
-```
-┌──────────────────────────────────────────────────────────┐
-│  1. TRAINING (Google Colab)                               │
-│     └── Dataset → YOLOv8 → best.pt                       │
-├──────────────────────────────────────────────────────────┤
-│  2. BACKEND (FastAPI)                                     │
-│     └── best.pt → API Endpoint → JSON Response           │
-├──────────────────────────────────────────────────────────┤
-│  3. FRONTEND (HTML/JS)                                    │
-│     └── Upload Image → API Call → Display Results        │
-├──────────────────────────────────────────────────────────┤
-│  4. DEPLOYMENT (Hugging Face)                             │
-│     └── Gradio App → Free Hosting                        │
-└──────────────────────────────────────────────────────────┘
-```
+**API not connecting?**
+- Ensure backend is running on port 8000
+- Check firewall settings
 
----
+**Slow detection?**
+- First request may be slow (model loading)
+- Subsequent requests will be fast
 
-## 📂 Struktur File Penting
+## Next Steps
 
-```
-cloth-recognition-yolo/
-├── notebooks/
-│   └── cloth_detection_training.ipynb  ← Training notebook
-├── backend/
-│   └── main.py                         ← FastAPI server
-├── frontend/
-│   └── index.html                      ← Web interface
-├── deployment/
-│   └── huggingface/
-│       └── app.py                      ← Gradio deploy
-├── models/
-│   └── best.pt                         ← Model Anda (setelah training)
-└── requirements.txt
-```
-
----
-
-## ❓ FAQ
-
-**Q: Tidak punya GPU?**
-A: Gunakan Google Colab (gratis, GPU T4)
-
-**Q: Berapa lama training?**
-A: ~30 menit - 1 jam di Colab T4
-
-**Q: Dataset dari mana?**
-A: Roboflow Universe (gratis, format YOLO)
-
-**Q: Deploy gratis dimana?**
-A: Hugging Face Spaces (gratis, GPU support)
-
----
-
-## 🆘 Troubleshooting
-
-### Error: CUDA not available
-```
-# Pastikan di Colab GPU aktif
-Runtime > Change runtime type > GPU
-```
-
-### Error: Model not found
-```bash
-# Pastikan model ada di folder models/
-ls models/
-# Harus ada: best.pt
-```
-
-### API Error 503
-```bash
-# Model belum di-load, cek path model
-# Edit backend/main.py: MODEL_PATH
-```
-
----
-
-**🎉 Happy Coding!**
+- 📖 Read full [README.md](README.md)
+- 🎓 Train custom models with notebooks
+- 🌐 Deploy to HuggingFace Spaces
