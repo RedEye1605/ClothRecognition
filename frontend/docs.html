@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FashionAI - Documentation</title>
+    <meta name="description"
+        content="Complete documentation for FashionAI clothing detection system. Learn how to use the app, API reference, and more.">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <link rel="icon" type="image/png" href="Logo.png">
+
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+
+    <!-- Shared Styles -->
+    <link rel="stylesheet" href="styles.css">
+
+    <style>
+        /* ========================================
+           Docs-Specific Styles
+        ======================================== */
+        .docs-page {
+            padding-top: 80px;
+        }
+
+        .docs-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: var(--spacing-2xl) var(--spacing-xl);
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            gap: var(--spacing-2xl);
+        }
+
+        /* ========================================
+           Sidebar Navigation
+        ======================================== */
+        .docs-sidebar {
+            position: sticky;
+            top: 100px;
+            height: fit-content;
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+        }
+
+        .docs-nav {
+            background: var(--bg-card);
+            border: var(--glass-border);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-lg);
+            backdrop-filter: var(--glass-blur);
+        }
+
+        .docs-nav__title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: var(--spacing-md);
+            padding-left: var(--spacing-sm);
+        }
+
+        .docs-nav__links {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-xs);
+        }
+
+        .docs-nav__link {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--radius-md);
+            font-size: 0.9375rem;
+            color: var(--text-secondary);
+            transition: all var(--transition-base);
+        }
+
+        .docs-nav__link:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .docs-nav__link.active {
+            color: var(--accent-primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .docs-nav__link .material-icons-outlined {
+            font-size: 18px;
+        }
+
+        /* ========================================
+           Main Content
+        ======================================== */
+        .docs-content {
+            min-width: 0;
+        }
+
+        .docs-header {
+            margin-bottom: var(--spacing-2xl);
+        }
+
+        .docs-header__badge {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: var(--radius-full);
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--accent-primary);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .docs-header__title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.8) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .docs-header__subtitle {
+            font-size: 1.125rem;
+            color: var(--text-secondary);
+        }
+
+        /* ========================================
+           Content Sections
+        ======================================== */
+        .docs-section {
+            margin-bottom: var(--spacing-3xl);
+            scroll-margin-top: 100px;
+        }
+
+        .docs-section__title {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-lg);
+            padding-bottom: var(--spacing-md);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .docs-section__title .material-icons-outlined {
+            font-size: 28px;
+            color: var(--accent-primary);
+        }
+
+        .docs-section__content {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            font-size: 1rem;
+        }
+
+        .docs-section__content p {
+            margin-bottom: var(--spacing-md);
+        }
+
+        .docs-section__content h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: var(--spacing-xl) 0 var(--spacing-md);
+        }
+
+        .docs-section__content ul,
+        .docs-section__content ol {
+            margin: var(--spacing-md) 0;
+            padding-left: var(--spacing-xl);
+        }
+
+        .docs-section__content li {
+            margin-bottom: var(--spacing-sm);
+        }
+
+        /* ========================================
+           Code Blocks
+        ======================================== */
+        .code-block {
+            background: var(--bg-tertiary);
+            border: var(--glass-border);
+            border-radius: var(--radius-md);
+            margin: var(--spacing-lg) 0;
+            overflow: hidden;
+        }
+
+        .code-block__header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: rgba(255, 255, 255, 0.03);
+            border-bottom: var(--glass-border);
+        }
+
+        .code-block__lang {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--accent-primary);
+            text-transform: uppercase;
+        }
+
+        .code-block__copy {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            background: none;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .code-block__copy:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .code-block__copy .material-icons-outlined {
+            font-size: 16px;
+        }
+
+        .code-block__content {
+            padding: var(--spacing-md);
+            overflow-x: auto;
+        }
+
+        .code-block__content pre {
+            margin: 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            color: var(--text-primary);
+        }
+
+        .code-block__content code {
+            font-family: inherit;
+        }
+
+        /* Inline code */
+        .docs-section__content code:not(pre code) {
+            background: rgba(99, 102, 241, 0.15);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875em;
+            color: var(--accent-primary);
+        }
+
+        /* ========================================
+           Info Cards
+        ======================================== */
+        .info-card {
+            display: flex;
+            gap: var(--spacing-md);
+            padding: var(--spacing-lg);
+            background: var(--bg-glass);
+            border: var(--glass-border);
+            border-radius: var(--radius-lg);
+            margin: var(--spacing-lg) 0;
+        }
+
+        .info-card--tip {
+            border-left: 3px solid var(--success);
+        }
+
+        .info-card--warning {
+            border-left: 3px solid var(--warning);
+        }
+
+        .info-card--note {
+            border-left: 3px solid var(--accent-primary);
+        }
+
+        .info-card__icon {
+            flex-shrink: 0;
+            color: var(--accent-primary);
+        }
+
+        .info-card--tip .info-card__icon {
+            color: var(--success);
+        }
+
+        .info-card--warning .info-card__icon {
+            color: var(--warning);
+        }
+
+        .info-card__content {
+            flex: 1;
+        }
+
+        .info-card__title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .info-card__text {
+            font-size: 0.9375rem;
+            color: var(--text-secondary);
+        }
+
+        /* ========================================
+           API Table
+        ======================================== */
+        .api-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: var(--spacing-lg) 0;
+        }
+
+        .api-table th,
+        .api-table td {
+            padding: var(--spacing-md);
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .api-table th {
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .api-table td {
+            font-size: 0.9375rem;
+            color: var(--text-secondary);
+        }
+
+        .api-table code {
+            background: rgba(99, 102, 241, 0.15);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8125rem;
+            color: var(--accent-primary);
+        }
+
+        .method-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .method-badge--get {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--success);
+        }
+
+        .method-badge--post {
+            background: rgba(59, 130, 246, 0.15);
+            color: #3b82f6;
+        }
+
+        /* ========================================
+           Class Grid
+        ======================================== */
+        .class-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--spacing-md);
+            margin: var(--spacing-lg) 0;
+        }
+
+        .class-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-md);
+            background: var(--bg-glass);
+            border: var(--glass-border);
+            border-radius: var(--radius-md);
+        }
+
+        .class-item__emoji {
+            font-size: 1.5rem;
+        }
+
+        .class-item__name {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        /* ========================================
+           Color Grid
+        ======================================== */
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--spacing-md);
+            margin: var(--spacing-lg) 0;
+        }
+
+        .color-item--docs {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-md);
+            background: var(--bg-glass);
+            border: var(--glass-border);
+            border-radius: var(--radius-md);
+        }
+
+        .color-item__swatch--small {
+            width: 24px;
+            height: 24px;
+            border-radius: var(--radius-sm);
+            flex-shrink: 0;
+        }
+
+        .color-item__label {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        /* ========================================
+           Responsive
+        ======================================== */
+        @media (max-width: 1024px) {
+            .docs-container {
+                grid-template-columns: 1fr;
+                padding: var(--spacing-xl) var(--spacing-lg);
+            }
+
+            .docs-sidebar {
+                position: static;
+                max-height: none;
+            }
+
+            .docs-nav {
+                display: none;
+            }
+
+            .class-grid,
+            .color-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .docs-page {
+                padding-top: 72px;
+            }
+
+            .docs-container {
+                padding: var(--spacing-lg) var(--spacing-md);
+            }
+
+            .docs-header__title {
+                font-size: 1.5rem;
+                word-wrap: break-word;
+            }
+
+            .docs-header__subtitle {
+                font-size: 1rem;
+            }
+
+            .docs-section__title {
+                font-size: 1.25rem;
+                flex-wrap: wrap;
+            }
+
+            .docs-section__content {
+                font-size: 0.9375rem;
+            }
+
+            .class-grid,
+            .color-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: var(--spacing-sm);
+            }
+
+            .class-item,
+            .color-item--docs {
+                padding: var(--spacing-sm);
+            }
+
+            .code-block__content {
+                padding: var(--spacing-sm);
+                overflow-x: auto;
+            }
+
+            .code-block__content pre {
+                font-size: 0.75rem;
+                white-space: pre-wrap;
+                word-break: break-all;
+            }
+
+            .info-card {
+                flex-direction: column;
+                padding: var(--spacing-md);
+            }
+
+            .info-card__text {
+                font-size: 0.875rem;
+            }
+
+            .api-table {
+                display: block;
+                overflow-x: auto;
+                font-size: 0.8125rem;
+            }
+
+            .api-table th,
+            .api-table td {
+                padding: var(--spacing-sm);
+                white-space: nowrap;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .docs-header__badge {
+                font-size: 0.75rem;
+            }
+
+            .docs-header__title {
+                font-size: 1.25rem;
+            }
+
+            .class-grid,
+            .color-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="navbar__container">
+            <a href="index.html" class="navbar__brand">
+                <span class="navbar__brand-icon">
+                    <span class="material-icons-outlined">checkroom</span>
+                </span>
+                FashionAI
+            </a>
+
+            <div class="navbar__links" id="navLinks">
+                <a href="index.html" class="navbar__link">
+                    <span class="material-icons-outlined">home</span>
+                    Home
+                </a>
+                <a href="app.html" class="navbar__link">
+                    <span class="material-icons-outlined">auto_awesome</span>
+                    Try App
+                </a>
+                <a href="docs.html" class="navbar__link active">
+                    <span class="material-icons-outlined">menu_book</span>
+                    Docs
+                </a>
+                <a href="https://github.com/RedEye1605/ClothRecognition" target="_blank" class="navbar__link">
+                    <span class="material-icons-outlined">code</span>
+                    GitHub
+                </a>
+            </div>
+
+            <a href="app.html" class="navbar__cta">
+                <span class="material-icons-outlined">rocket_launch</span>
+                Launch App
+            </a>
+
+            <button class="navbar__toggle" id="navToggle">
+                <span class="material-icons-outlined">menu</span>
+            </button>
+        </div>
+    </nav>
+
+    <div class="docs-page">
+        <div class="docs-container">
+            <!-- Sidebar -->
+            <aside class="docs-sidebar">
+                <nav class="docs-nav">
+                    <h2 class="docs-nav__title">Documentation</h2>
+                    <div class="docs-nav__links">
+                        <a href="#about" class="docs-nav__link active">
+                            <span class="material-icons-outlined">info</span>
+                            About
+                        </a>
+                        <a href="#quickstart" class="docs-nav__link">
+                            <span class="material-icons-outlined">rocket_launch</span>
+                            Quick Start
+                        </a>
+                        <a href="#usage" class="docs-nav__link">
+                            <span class="material-icons-outlined">touch_app</span>
+                            How to Use
+                        </a>
+                        <a href="#classes" class="docs-nav__link">
+                            <span class="material-icons-outlined">category</span>
+                            Classes
+                        </a>
+                        <a href="#colors" class="docs-nav__link">
+                            <span class="material-icons-outlined">palette</span>
+                            Colors
+                        </a>
+                        <a href="#api" class="docs-nav__link">
+                            <span class="material-icons-outlined">api</span>
+                            API Reference
+                        </a>
+                        <a href="#deployment" class="docs-nav__link">
+                            <span class="material-icons-outlined">cloud_upload</span>
+                            Deployment
+                        </a>
+                    </div>
+                </nav>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="docs-content">
+                <header class="docs-header">
+                    <span class="docs-header__badge">
+                        <span class="material-icons-outlined" style="font-size: 16px;">menu_book</span>
+                        Documentation
+                    </span>
+                    <h1 class="docs-header__title">FashionAI Documentation</h1>
+                    <p class="docs-header__subtitle">
+                        Learn how to use the AI-powered clothing detection system with YOLOv8 deep learning.
+                    </p>
+                </header>
+
+                <!-- About Section -->
+                <section id="about" class="docs-section">
+                    <h2 class="docs-section__title">
+                        <span class="material-icons-outlined">info</span>
+                        About FashionAI
+                    </h2>
+                    <div class="docs-section__content">
+                        <p>
+                            FashionAI is an AI-powered clothing detection system that uses <strong>YOLOv8</strong> deep
+                            learning
+                            to detect and classify clothing items in images. It can identify 8 different types of
+                            clothing
+                            and classify their colors into 8 color categories.
+                        </p>
+                        <p>
+                            The system is built with a modern tech stack including <code>PyTorch</code> for deep
+                            learning,
+                            <code>FastAPI</code> for the backend API, and a responsive web interface for easy
+                            interaction.
+                        </p>
+
+                        <div class="info-card info-card--note">
+                            <span class="material-icons-outlined info-card__icon">lightbulb</span>
+                            <div class="info-card__content">
+                                <div class="info-card__title">Key Features</div>
+                                <div class="info-card__text">
+                                    Real-time detection, webcam support, color classification, and high accuracy with
+                                    YOLOv8n.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Quick Start Section -->
+                <section id="quickstart" class="docs-section">
+                    <h2 class="docs-section__title">
+                        <span class="material-icons-outlined">rocket_launch</span>
+                        Quick Start
+                    </h2>
+                    <div class="docs-section__content">
+                        <h3>1. Install Dependencies</h3>
+                        <p>Navigate to the backend directory and install required packages:</p>
+                        <div class="code-block">
+                            <div class="code-block__header">
+                                <span class="code-block__lang">Bash</span>
+                                <button class="code-block__copy" onclick="copyCode(this)">
+                                    <span class="material-icons-outlined">content_copy</span>
+                                    Copy
+                                </button>
+                            </div>
+                            <div class="code-block__content">
+                                <pre><code>cd backend
+pip install -r requirements.txt</code></pre>
+                            </div>
+                        </div>
+
+                        <h3>2. Add Models</h3>
+                        <p>Place the trained models in the <code>models/</code> folder:</p>
+                        <ul>
+                            <li><code>cloth_classifier.pt</code> - Clothing detection model</li>
+                            <li><code>color_classifier.pt</code> - Color classification model</li>
+                        </ul>
+
+                        <h3>3. Run Backend</h3>
+                        <div class="code-block">
+                            <div class="code-block__header">
+                                <span class="code-block__lang">Bash</span>
+                                <button class="code-block__copy" onclick="copyCode(this)">
+                                    <span class="material-icons-outlined">content_copy</span>
+                                    Copy
+                                </button>
+                            </div>
+                            <div class="code-block__content">
+                                <pre><code>cd backend
+uvicorn app.main:app --reload --port 8000</code></pre>
+                            </div>
+                        </div>
+
+                        <h3>4. Open Frontend</h3>
+                        <div class="code-block">
+                            <div class="code-block__header">
+                                <span class="code-block__lang">Bash</span>
+                                <button class="code-block__copy" onclick="copyCode(this)">
+                                    <span class="material-icons-outlined">content_copy</span>
+                                    Copy
+                                </button>
+                            </div>
+                            <div class="code-block__content">
+                                <pre><code>cd frontend
+python -m http.server 5500</code></pre>
+                            </div>
+                        </div>
+                        <p>Then open <a href="http://127.0.0.1:5500"
+                                style="color: var(--accent-primary);">http://127.0.0.1:5500</a> in your browser.</p>
+
+                        <div class="info-card info-card--tip">
+                            <span class="material-icons-outlined info-card__icon">tips_and_updates</span>
+                            <div class="info-card__content">
+                                <div class="info-card__title">Pro Tip</div>
+                                <div class="info-card__text">
+                                    You can also use VS Code Live Server extension for automatic reload during
+                                    development.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- How to Use Section -->
+                <section id="usage" class="docs-section">
+                    <h2 class="docs-section__title">
+                        <span class="material-icons-outlined">touch_app</span>
+                        How to Use
+                    </h2>
+                    <div class="docs-section__content">
+                        <h3>Image Upload</h3>
+                        <ol>
+                            <li>Go to the <a href="app.html" style="color: var(--accent-primary);">App page</a></li>
+                            <li>Click on the upload area or drag and drop an image</li>
+                            <li>Adjust the confidence threshold if needed (default: 25%)</li>
+                            <li>Click <strong>"Detect Clothing"</strong> button</li>
+                            <li>View results with bounding boxes and classifications</li>
+                        </ol>
+
+                        <h3>Live Camera</h3>
+                        <ol>
+                            <li>Go to the <a href="app.html" style="color: var(--accent-primary);">App page</a></li>
+                            <li>Click the <strong>"Live Camera"</strong> tab</li>
+                            <li>Allow camera access when prompted</li>
+                            <li>Choose between <strong>Capture Mode</strong> (take photo) or <strong>Live
+                                    Detection</strong> (real-time)</li>
+                            <li>View detection results in real-time</li>
+                        </ol>
+
+                        <div class="info-card info-card--warning">
+                            <span class="material-icons-outlined info-card__icon">warning</span>
+                            <div class="info-card__content">
+                                <div class="info-card__title">Camera Access</div>
+                                <div class="info-card__text">
+                                    Camera access requires HTTPS or localhost. Direct file:// URLs won't work.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Classes Section -->
+                <section id="classes" class="docs-section">
+                    <h2 class="docs-section__title">
+                        <span class="material-icons-outlined">category</span>
+                        Supported Classes
+                    </h2>
+                    <div class="docs-section__content">
+                        <p>The model can detect and classify the following 8 clothing types:</p>
+
+                        <div class="class-grid">
+                            <div class="class-item">
+                                <span class="class-item__emoji">👕</span>
+                                <span class="class-item__name">T-Shirt</span>
+                            </div>
+                            <div class="class-item">
+                                <span class="class-item__emoji">👗</span>
+                                <span class="class-item__name">Dress</span>
+                            </div>
+                            <div class="class-item">
+                                <span class="class-item__emoji">🧥</span>
+                                <span class="class-item__name">Jacket</span>
+                            </div>
+                            <div class="class-item">
+                                <span class="class-item__emoji">👖</span>
+                                <span class="class-item__name">Pants</span>
+                            </div>
+                            <div class="class-item">
+                                <span class="class-item__emoji">👔</span>
+                                <span class="class-item__name">Shirt</span>
+                            </div>
+                            <div class="class-item">
+                                <span class="class-item__emoji">🩳</span>
+                                <span class="class-item__name">Shorts</span>
+                            </div>
+                            <div class="class-item">
+                                <span class="class-item__emoji">🎽</span>
+                                <span class="class-item__name">Skirt</span>
+                            </div>
+                            <div class="class-item">
+                                <span class="class-item__emoji">🧶</span>
+                                <span class="class-item__name">Sweater</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Colors Section -->
+                <section id="colors" class="docs-section">
+                    <h2 class="docs-section__title">
+                        <span class="material-icons-outlined">palette</span>
+                        Color Classification
+                    </h2>
+                    <div class="docs-section__content">
+                        <p>Each detected clothing item is also classified by its dominant color:</p>
+
+                        <div class="color-grid">
+                            <div class="color-item--docs">
+                                <span class="color-item__swatch--small" style="background: #D4A574;"></span>
+                                <span class="color-item__label">Beige</span>
+                            </div>
+                            <div class="color-item--docs">
+                                <span class="color-item__swatch--small" style="background: #2D2D2D;"></span>
+                                <span class="color-item__label">Black</span>
+                            </div>
+                            <div class="color-item--docs">
+                                <span class="color-item__swatch--small" style="background: #3B82F6;"></span>
+                                <span class="color-item__label">Blue</span>
+                            </div>
+                            <div class="color-item--docs">
+                                <span class="color-item__swatch--small" style="background: #6B7280;"></span>
+                                <span class="color-item__label">Gray</span>
+                            </div>
+                            <div class="color-item--docs">
+                                <span class="color-item__swatch--small" style="background: #22C55E;"></span>
+                                <span class="color-item__label">Green</span>
+                            </div>
+                            <div class="color-item--docs">
+                                <span class="color-item__swatch--small"
+                                    style="background: linear-gradient(135deg, #8B5CF6, #EC4899);"></span>
+                                <span class="color-item__label">Pattern</span>
+                            </div>
+                            <div class="color-item--docs">
+                                <span class="color-item__swatch--small" style="background: #EF4444;"></span>
+                                <span class="color-item__label">Red</span>
+                            </div>
+                            <div class="color-item--docs">
+                                <span class="color-item__swatch--small"
+                                    style="background: #F9FAFB; border: 1px solid rgba(255,255,255,0.2);"></span>
+                                <span class="color-item__label">White</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- API Reference Section -->
+                <section id="api" class="docs-section">
+                    <h2 class="docs-section__title">
+                        <span class="material-icons-outlined">api</span>
+                        API Reference
+                    </h2>
+                    <div class="docs-section__content">
+                        <p>The backend exposes a REST API for clothing detection:</p>
+
+                        <table class="api-table">
+                            <thead>
+                                <tr>
+                                    <th>Endpoint</th>
+                                    <th>Method</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>/health</code></td>
+                                    <td><span class="method-badge method-badge--get">GET</span></td>
+                                    <td>Health check with model status</td>
+                                </tr>
+                                <tr>
+                                    <td><code>/detect</code></td>
+                                    <td><span class="method-badge method-badge--post">POST</span></td>
+                                    <td>Detect clothing in uploaded image</td>
+                                </tr>
+                                <tr>
+                                    <td><code>/detect/batch</code></td>
+                                    <td><span class="method-badge method-badge--post">POST</span></td>
+                                    <td>Batch detection for multiple images</td>
+                                </tr>
+                                <tr>
+                                    <td><code>/classes</code></td>
+                                    <td><span class="method-badge method-badge--get">GET</span></td>
+                                    <td>List supported clothing classes</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h3>Example Response</h3>
+                        <div class="code-block">
+                            <div class="code-block__header">
+                                <span class="code-block__lang">JSON</span>
+                                <button class="code-block__copy" onclick="copyCode(this)">
+                                    <span class="material-icons-outlined">content_copy</span>
+                                    Copy
+                                </button>
+                            </div>
+                            <div class="code-block__content">
+                                <pre><code>{
+  "success": true,
+  "detections": [
+    {
+      "className": "Tshirt",
+      "confidence": 0.95,
+      "bbox": [100, 100, 200, 200],
+      "color": "blue",
+      "colorConfidence": 0.87,
+      "colorHex": "#3B82F6",
+      "label": "Blue Tshirt"
+    }
+  ]
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Deployment Section -->
+                <section id="deployment" class="docs-section">
+                    <h2 class="docs-section__title">
+                        <span class="material-icons-outlined">cloud_upload</span>
+                        Deployment
+                    </h2>
+                    <div class="docs-section__content">
+                        <h3>HuggingFace Spaces</h3>
+                        <p>Deploy to HuggingFace Spaces using Gradio:</p>
+                        <ol>
+                            <li>Create a new Space with Gradio SDK</li>
+                            <li>Upload files from <code>deployment/huggingface/</code></li>
+                            <li>Upload both model files (<code>.pt</code>)</li>
+                            <li>Your app will be live automatically!</li>
+                        </ol>
+
+                        <h3>Docker</h3>
+                        <p>Build and run with Docker:</p>
+                        <div class="code-block">
+                            <div class="code-block__header">
+                                <span class="code-block__lang">Bash</span>
+                                <button class="code-block__copy" onclick="copyCode(this)">
+                                    <span class="material-icons-outlined">content_copy</span>
+                                    Copy
+                                </button>
+                            </div>
+                            <div class="code-block__content">
+                                <pre><code>docker build -t fashionai .
+docker run -p 8000:8000 fashionai</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="info-card info-card--tip">
+                            <span class="material-icons-outlined info-card__icon">tips_and_updates</span>
+                            <div class="info-card__content">
+                                <div class="info-card__title">Model Training</div>
+                                <div class="info-card__text">
+                                    Train your own models using the Jupyter notebook in
+                                    <code>notebooks/cloth_detection_training.ipynb</code>.
+                                    Works best with Google Colab and T4 GPU.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer__container">
+            <div class="footer__bottom" style="border-top: none; padding-top: 0;">
+                <p class="footer__copyright">© 2024 FashionAI. Built with ❤️ for AI enthusiasts.</p>
+                <div class="footer__tech">
+                    <span class="tech-badge">
+                        <span class="material-icons-outlined">smart_toy</span>
+                        YOLOv8
+                    </span>
+                    <span class="tech-badge">
+                        <span class="material-icons-outlined">local_fire_department</span>
+                        PyTorch
+                    </span>
+                    <span class="tech-badge">
+                        <span class="material-icons-outlined">api</span>
+                        FastAPI
+                    </span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile menu toggle
+        const navToggle = document.getElementById('navToggle');
+        const navLinks = document.getElementById('navLinks');
+
+        navToggle.addEventListener('click', () => {
+            navLinks.classList.toggle('show');
+        });
+
+        navLinks.querySelectorAll('.navbar__link').forEach(link => {
+            link.addEventListener('click', () => {
+                navLinks.classList.remove('show');
+            });
+        });
+
+        // Sidebar active link
+        const sections = document.querySelectorAll('.docs-section');
+        const navLinksDoc = document.querySelectorAll('.docs-nav__link');
+
+        function updateActiveLink() {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (scrollY >= sectionTop - 150) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinksDoc.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === `#${current}`) {
+                    link.classList.add('active');
+                }
+            });
+        }
+
+        window.addEventListener('scroll', updateActiveLink);
+
+        // Copy code functionality
+        function copyCode(button) {
+            const codeBlock = button.closest('.code-block');
+            const code = codeBlock.querySelector('code').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                const originalText = button.innerHTML;
+                button.innerHTML = '<span class="material-icons-outlined">check</span> Copied!';
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+
+</html>

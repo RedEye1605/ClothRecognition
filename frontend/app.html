@@ -1,0 +1,1756 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FashionAI - Cloth Detection App</title>
+    <meta name="description"
+        content="AI-powered clothing detection using YOLOv8. Detect 8 types of clothing items instantly.">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+
+    <link rel="icon" type="image/png" href="Logo.png">
+
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+
+    <!-- Shared Styles -->
+    <link rel="stylesheet" href="styles.css">
+
+    <style>
+        /* ========================================
+           App-Specific Styles
+        ======================================== */
+        .app-page {
+            padding-top: 72px;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: var(--spacing-lg);
+            min-height: calc(100vh - 72px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ========================================
+           Header
+        ======================================== */
+        .app-header {
+            text-align: center;
+            padding: var(--spacing-xl) 0;
+        }
+
+        .app-header__title {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.8) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .app-header__subtitle {
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .app-header__status {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: var(--bg-glass);
+            border: var(--glass-border);
+            border-radius: var(--radius-full);
+            backdrop-filter: var(--glass-blur);
+            margin-top: var(--spacing-md);
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--success);
+            box-shadow: 0 0 12px var(--success-glow);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .status-indicator.offline {
+            background: var(--error);
+            box-shadow: 0 0 12px var(--error-glow);
+            animation: none;
+        }
+
+        .status-text {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* ========================================
+           Tab Navigation
+        ======================================== */
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .tab-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-md) var(--spacing-xl);
+            background: var(--bg-glass);
+            border: var(--glass-border);
+            border-radius: var(--radius-full);
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-base);
+            backdrop-filter: var(--glass-blur);
+        }
+
+        .tab-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            transform: translateY(-2px);
+        }
+
+        .tab-btn.active {
+            background: var(--accent-gradient);
+            color: white;
+            border-color: transparent;
+            box-shadow: var(--shadow-glow);
+        }
+
+        .tab-btn .material-icons-outlined {
+            font-size: 20px;
+        }
+
+        /* ========================================
+           Main Content Grid
+        ======================================== */
+        .main-content {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-xl);
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ========================================
+           App Card Overrides
+        ======================================== */
+        .app-card {
+            background: var(--bg-card);
+            border: var(--glass-border);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-xl);
+            backdrop-filter: var(--glass-blur);
+        }
+
+        .app-card__header {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .app-card__icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            background: var(--accent-gradient);
+            border-radius: var(--radius-md);
+            color: white;
+        }
+
+        .app-card__icon .material-icons-outlined {
+            font-size: 24px;
+        }
+
+        .app-card__title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* ========================================
+           Upload Zone
+        ======================================== */
+        .upload-zone {
+            border: 2px dashed rgba(255, 255, 255, 0.15);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-3xl) var(--spacing-xl);
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition-base);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-zone::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--accent-gradient);
+            opacity: 0;
+            transition: opacity var(--transition-base);
+        }
+
+        .upload-zone:hover {
+            border-color: var(--accent-primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .upload-zone:hover::before {
+            opacity: 0.03;
+        }
+
+        .upload-zone.dragover {
+            border-color: var(--accent-primary);
+            background: rgba(99, 102, 241, 0.1);
+            transform: scale(1.01);
+        }
+
+        .upload-zone__icon {
+            width: 72px;
+            height: 72px;
+            margin: 0 auto var(--spacing-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: var(--radius-lg);
+            color: var(--accent-primary);
+            transition: all var(--transition-base);
+        }
+
+        .upload-zone:hover .upload-zone__icon {
+            background: rgba(99, 102, 241, 0.15);
+            transform: scale(1.05);
+        }
+
+        .upload-zone__icon .material-icons-outlined {
+            font-size: 36px;
+        }
+
+        .upload-zone__title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .upload-zone__subtitle {
+            font-size: 0.875rem;
+            color: var(--text-tertiary);
+        }
+
+        /* ========================================
+           Preview Area
+        ======================================== */
+        .preview-container {
+            display: none;
+            flex-direction: column;
+            gap: var(--spacing-lg);
+        }
+
+        .preview-container.show {
+            display: flex;
+        }
+
+        .preview-wrapper {
+            position: relative;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            background: var(--bg-tertiary);
+            height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .preview-wrapper img,
+        .preview-wrapper canvas,
+        .preview-wrapper video {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            display: block;
+            border-radius: var(--radius-lg);
+        }
+
+        .preview-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+
+        .preview-overlay.show {
+            display: flex;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--accent-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ========================================
+           Webcam Controls
+        ======================================== */
+        .webcam-container {
+            display: none;
+        }
+
+        .webcam-container.show {
+            display: block;
+        }
+
+        .mode-toggle {
+            display: flex;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .mode-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-md);
+            background: var(--bg-glass);
+            border: var(--glass-border);
+            border-radius: var(--radius-md);
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-base);
+        }
+
+        .mode-btn:hover {
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .mode-btn.active {
+            background: var(--accent-gradient);
+            color: white;
+            border-color: transparent;
+        }
+
+        .mode-btn .material-icons-outlined {
+            font-size: 18px;
+        }
+
+        .webcam-preview {
+            position: relative;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            background: #000;
+            min-height: 480px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .webcam-preview video {
+            width: 100%;
+            height: auto;
+            max-height: 80vh;
+            object-fit: contain;
+            display: block;
+        }
+
+        .webcam-preview canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .live-stats {
+            position: absolute;
+            top: var(--spacing-md);
+            left: var(--spacing-md);
+            display: none;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: 8px 16px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        .live-stats.show {
+            display: flex;
+        }
+
+        .live-indicator {
+            width: 8px;
+            height: 8px;
+            background: #ef4444;
+            border-radius: 50%;
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        .live-stats.active .live-indicator {
+            background: #22c55e;
+        }
+
+        .webcam-controls {
+            display: flex;
+            justify-content: center;
+            gap: var(--spacing-md);
+            padding: var(--spacing-lg);
+            background: var(--bg-glass);
+            border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+            margin-top: -4px;
+        }
+
+        .webcam-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 56px;
+            height: 56px;
+            border: none;
+            border-radius: 50%;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all var(--transition-base);
+        }
+
+        .webcam-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.05);
+        }
+
+        .webcam-btn.capture {
+            width: 72px;
+            height: 72px;
+            background: var(--accent-gradient);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .webcam-btn.capture:hover {
+            transform: scale(1.08);
+        }
+
+        .webcam-btn.capture::before {
+            content: '';
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+        }
+
+        .webcam-btn .material-icons-outlined {
+            font-size: 24px;
+        }
+
+        /* ========================================
+           Controls
+        ======================================== */
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+
+        .slider-group {
+            background: var(--bg-glass);
+            border: var(--glass-border);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .slider-label {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .slider-label .material-icons-outlined {
+            font-size: 18px;
+            color: var(--accent-primary);
+        }
+
+        .slider-value {
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+            background: rgba(99, 102, 241, 0.1);
+            padding: 4px 10px;
+            border-radius: var(--radius-full);
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--accent-gradient);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 8px var(--accent-glow);
+            transition: transform var(--transition-fast);
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+        }
+
+        /* ========================================
+           Button Overrides
+        ======================================== */
+        .btn--full {
+            width: 100%;
+        }
+
+        .btn--primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ========================================
+           Class Tags
+        ======================================== */
+        .class-section {
+            margin-top: var(--spacing-xl);
+            padding-top: var(--spacing-lg);
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .class-section__title {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-tertiary);
+            margin-bottom: var(--spacing-md);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .class-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-sm);
+        }
+
+        .class-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: var(--bg-glass);
+            border: var(--glass-border);
+            border-radius: var(--radius-full);
+            font-size: 0.8125rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: all var(--transition-fast);
+        }
+
+        .class-tag:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-1px);
+        }
+
+        .class-tag__dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        /* ========================================
+           Results Section
+        ======================================== */
+        .results-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: var(--spacing-3xl);
+            text-align: center;
+        }
+
+        .results-empty__icon {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-glass);
+            border-radius: var(--radius-xl);
+            margin-bottom: var(--spacing-lg);
+            color: var(--text-muted);
+        }
+
+        .results-empty__icon .material-icons-outlined {
+            font-size: 36px;
+        }
+
+        .results-empty__text {
+            font-size: 1rem;
+            color: var(--text-tertiary);
+        }
+
+        .results-content {
+            display: none;
+            flex-direction: column;
+            gap: var(--spacing-lg);
+        }
+
+        .results-content.show {
+            display: flex;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--spacing-md);
+        }
+
+        .stat-card {
+            background: var(--bg-glass);
+            border: var(--glass-border);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-lg);
+            text-align: center;
+            transition: all var(--transition-base);
+        }
+
+        .stat-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .stat-card__value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .stat-card__label {
+            font-size: 0.8125rem;
+            color: var(--text-tertiary);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .detection-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+
+        .detection-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            padding: var(--spacing-md);
+            background: var(--bg-glass);
+            border: var(--glass-border);
+            border-radius: var(--radius-md);
+            transition: all var(--transition-base);
+        }
+
+        .detection-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateX(4px);
+        }
+
+        .detection-item__icon {
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .detection-item__color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            flex-shrink: 0;
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
+        }
+
+        .detection-item__name {
+            flex: 1;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .detection-item__confidence {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--accent-primary);
+            background: rgba(99, 102, 241, 0.1);
+            padding: 4px 12px;
+            border-radius: var(--radius-full);
+        }
+
+        /* ========================================
+           Toast Notification
+        ======================================== */
+        .toast {
+            position: fixed;
+            bottom: var(--spacing-xl);
+            right: var(--spacing-xl);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            padding: var(--spacing-md) var(--spacing-lg);
+            background: var(--bg-tertiary);
+            border: var(--glass-border);
+            border-radius: var(--radius-md);
+            backdrop-filter: var(--glass-blur);
+            box-shadow: var(--shadow-lg);
+            transform: translateY(120%);
+            opacity: 0;
+            transition: all var(--transition-base);
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            border-left: 3px solid var(--success);
+        }
+
+        .toast.error {
+            border-left: 3px solid var(--error);
+        }
+
+        .toast__icon {
+            color: var(--accent-primary);
+        }
+
+        .toast.success .toast__icon {
+            color: var(--success);
+        }
+
+        .toast.error .toast__icon {
+            color: var(--error);
+        }
+
+        .toast__message {
+            font-size: 0.9375rem;
+            color: var(--text-primary);
+        }
+
+        /* ========================================
+           Responsive
+        ======================================== */
+        @media (max-width: 768px) {
+            .app-page {
+                padding-top: 72px;
+            }
+
+            .app-container {
+                padding: var(--spacing-md);
+            }
+
+            .app-header {
+                padding: var(--spacing-md) 0;
+            }
+
+            .app-header__title {
+                font-size: 1.5rem;
+            }
+
+            .app-header__subtitle {
+                font-size: 0.875rem;
+            }
+
+            .tabs {
+                flex-wrap: wrap;
+                gap: var(--spacing-xs);
+            }
+
+            .tab-btn {
+                flex: 1;
+                min-width: 130px;
+                padding: var(--spacing-sm) var(--spacing-md);
+                font-size: 0.875rem;
+                justify-content: center;
+            }
+
+            .main-content {
+                gap: var(--spacing-md);
+            }
+
+            .app-card {
+                padding: var(--spacing-md);
+            }
+
+            .app-card__header {
+                margin-bottom: var(--spacing-md);
+            }
+
+            .app-card__title {
+                font-size: 1.125rem;
+            }
+
+            .upload-zone {
+                padding: var(--spacing-xl) var(--spacing-md);
+            }
+
+            .upload-zone__icon {
+                width: 56px;
+                height: 56px;
+            }
+
+            .upload-zone__icon .material-icons-outlined {
+                font-size: 28px;
+            }
+
+            .preview-wrapper {
+                height: 300px;
+            }
+
+            .webcam-preview {
+                min-height: 300px;
+            }
+
+            .webcam-btn {
+                width: 48px;
+                height: 48px;
+            }
+
+            .webcam-btn.capture {
+                width: 64px;
+                height: 64px;
+            }
+
+            .stat-card__value {
+                font-size: 2rem;
+            }
+
+            .detection-item {
+                padding: var(--spacing-sm);
+            }
+
+            .toast {
+                left: var(--spacing-md);
+                right: var(--spacing-md);
+                bottom: var(--spacing-md);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .tab-btn {
+                min-width: 100%;
+            }
+
+            .stat-card {
+                padding: var(--spacing-md);
+            }
+
+            .stat-card__value {
+                font-size: 1.75rem;
+            }
+        }
+
+        /* ========================================
+           Animations
+        ======================================== */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .animate-slide-in {
+            animation: slideIn 0.4s ease forwards;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="navbar__container">
+            <a href="index.html" class="navbar__brand">
+                <span class="navbar__brand-icon">
+                    <span class="material-icons-outlined">checkroom</span>
+                </span>
+                FashionAI
+            </a>
+
+            <div class="navbar__links" id="navLinks">
+                <a href="index.html" class="navbar__link">
+                    <span class="material-icons-outlined">home</span>
+                    Home
+                </a>
+                <a href="app.html" class="navbar__link active">
+                    <span class="material-icons-outlined">auto_awesome</span>
+                    Try App
+                </a>
+                <a href="docs.html" class="navbar__link">
+                    <span class="material-icons-outlined">menu_book</span>
+                    Docs
+                </a>
+                <a href="https://github.com/RedEye1605/ClothRecognition" target="_blank" class="navbar__link">
+                    <span class="material-icons-outlined">code</span>
+                    GitHub
+                </a>
+            </div>
+
+            <a href="docs.html" class="navbar__cta">
+                <span class="material-icons-outlined">menu_book</span>
+                Docs
+            </a>
+
+            <button class="navbar__toggle" id="navToggle">
+                <span class="material-icons-outlined">menu</span>
+            </button>
+        </div>
+    </nav>
+
+    <div class="app-page">
+        <div class="app-container">
+            <!-- Header -->
+            <header class="app-header">
+                <h1 class="app-header__title">Cloth Detection App</h1>
+                <p class="app-header__subtitle">Upload an image or use your camera to detect clothing items</p>
+                <div class="app-header__status">
+                    <span class="status-indicator" id="statusIndicator"></span>
+                    <span class="status-text" id="statusText">Connecting...</span>
+                </div>
+            </header>
+
+            <!-- Tab Navigation -->
+            <nav class="tabs">
+                <button class="tab-btn active" data-tab="upload" id="tabUpload">
+                    <span class="material-icons-outlined">cloud_upload</span>
+                    Upload Image
+                </button>
+                <button class="tab-btn" data-tab="webcam" id="tabWebcam">
+                    <span class="material-icons-outlined">videocam</span>
+                    Live Camera
+                </button>
+            </nav>
+
+            <!-- Main Content -->
+            <main class="main-content">
+                <!-- Input Section -->
+                <section class="app-card">
+                    <div class="app-card__header">
+                        <div class="app-card__icon">
+                            <span class="material-icons-outlined">add_photo_alternate</span>
+                        </div>
+                        <h2 class="app-card__title">Input</h2>
+                    </div>
+
+                    <!-- Upload Tab Content -->
+                    <div id="uploadContent">
+                        <!-- Upload Zone -->
+                        <div class="upload-zone" id="uploadZone">
+                            <div class="upload-zone__icon">
+                                <span class="material-icons-outlined">cloud_upload</span>
+                            </div>
+                            <p class="upload-zone__title">Drag & drop image here</p>
+                            <p class="upload-zone__subtitle">or click to browse files</p>
+                        </div>
+                        <input type="file" id="fileInput" accept="image/*" hidden>
+
+                        <!-- Preview Container -->
+                        <div class="preview-container" id="previewContainer">
+                            <div class="preview-wrapper">
+                                <img id="previewImg" alt="Preview">
+                                <div class="preview-overlay" id="loadingOverlay">
+                                    <div class="spinner"></div>
+                                </div>
+                            </div>
+                            <button class="btn btn--secondary" id="clearBtn">
+                                <span class="material-icons-outlined">close</span>
+                                Clear Image
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Webcam Tab Content -->
+                    <div class="webcam-container" id="webcamContent">
+                        <!-- Mode Toggle -->
+                        <div class="mode-toggle">
+                            <button class="mode-btn active" id="modeCapture" data-mode="capture">
+                                <span class="material-icons-outlined">photo_camera</span>
+                                Capture Mode
+                            </button>
+                            <button class="mode-btn" id="modeLive" data-mode="live">
+                                <span class="material-icons-outlined">stream</span>
+                                Live Detection
+                            </button>
+                        </div>
+
+                        <div class="webcam-preview" id="webcamPreviewContainer">
+                            <video id="webcamVideo" autoplay playsinline muted></video>
+                            <canvas id="webcamCanvas"></canvas>
+                            <div class="preview-overlay" id="webcamLoading">
+                                <div class="spinner"></div>
+                            </div>
+                            <!-- Live Stats Overlay -->
+                            <div class="live-stats" id="liveStats">
+                                <span class="live-indicator"></span>
+                                <span id="fpsCounter">0 FPS</span>
+                                <span id="detectionCounter">0 items</span>
+                            </div>
+                        </div>
+                        <div class="webcam-controls">
+                            <button class="webcam-btn" id="switchCameraBtn" title="Switch Camera">
+                                <span class="material-icons-outlined">cameraswitch</span>
+                            </button>
+                            <button class="webcam-btn capture" id="captureBtn" title="Capture & Detect"></button>
+                            <button class="webcam-btn live-toggle" id="liveToggleBtn" title="Start/Stop Live Detection"
+                                style="display:none;">
+                                <span class="material-icons-outlined">play_arrow</span>
+                            </button>
+                            <button class="webcam-btn" id="stopCameraBtn" title="Stop Camera">
+                                <span class="material-icons-outlined">stop</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Controls -->
+                    <div class="controls">
+                        <div class="slider-group">
+                            <div class="slider-header">
+                                <span class="slider-label">
+                                    <span class="material-icons-outlined">tune</span>
+                                    Confidence Threshold
+                                </span>
+                                <span class="slider-value" id="confValue">25%</span>
+                            </div>
+                            <input type="range" id="confSlider" min="10" max="90" value="25">
+                        </div>
+
+                        <button class="btn btn--primary btn--full" id="detectBtn" disabled>
+                            <span class="material-icons-outlined">auto_awesome</span>
+                            Detect Clothing
+                        </button>
+                    </div>
+
+                    <!-- Class Tags -->
+                    <div class="class-section">
+                        <h3 class="class-section__title">
+                            <span class="material-icons-outlined" style="font-size: 16px;">sell</span>
+                            Supported Classes
+                        </h3>
+                        <div class="class-tags stagger-children" id="classTags">
+                            <div class="class-tag">T-Shirt</div>
+                            <div class="class-tag">Dress</div>
+                            <div class="class-tag">Jacket</div>
+                            <div class="class-tag">Pants</div>
+                            <div class="class-tag">Shirt</div>
+                            <div class="class-tag">Shorts</div>
+                            <div class="class-tag">Skirt</div>
+                            <div class="class-tag">Sweater</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Results Section -->
+                <section class="app-card">
+                    <div class="app-card__header">
+                        <div class="app-card__icon">
+                            <span class="material-icons-outlined">insights</span>
+                        </div>
+                        <h2 class="app-card__title">Results</h2>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div class="results-empty" id="resultsEmpty">
+                        <div class="results-empty__icon">
+                            <span class="material-icons-outlined">image_search</span>
+                        </div>
+                        <p class="results-empty__text">Upload an image or use camera to detect clothing</p>
+                    </div>
+
+                    <!-- Results Content -->
+                    <div class="results-content" id="resultsContent">
+                        <div class="preview-wrapper">
+                            <canvas id="resultCanvas"></canvas>
+                        </div>
+
+                        <div class="stats-grid" id="statsGrid">
+                            <div class="stat-card">
+                                <div class="stat-card__value" id="statCount">0</div>
+                                <div class="stat-card__label">Items Found</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-card__value" id="statConfidence">0%</div>
+                                <div class="stat-card__label">Avg Confidence</div>
+                            </div>
+                        </div>
+
+                        <div class="detection-list" id="detectionList"></div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <span class="material-icons-outlined toast__icon" id="toastIcon">info</span>
+        <span class="toast__message" id="toastMessage"></span>
+    </div>
+
+    <script>
+        // ============================================
+        // Configuration
+        // ============================================
+        const API_URL = 'http://127.0.0.1:8000';
+
+        const CLASS_CONFIG = {
+            'tshirt': { color: '#FF6B6B', label: 'T-Shirt', icon: '👕' },
+            't-shirt': { color: '#FF6B6B', label: 'T-Shirt', icon: '👕' },
+            'dress': { color: '#45B7D1', label: 'Dress', icon: '👗' },
+            'jacket': { color: '#96CEB4', label: 'Jacket', icon: '🧥' },
+            'pants': { color: '#4ECDC4', label: 'Pants', icon: '👖' },
+            'shirt': { color: '#FFEAA7', label: 'Shirt', icon: '👔' },
+            'short': { color: '#98D8C8', label: 'Shorts', icon: '🩳' },
+            'shorts': { color: '#98D8C8', label: 'Shorts', icon: '🩳' },
+            'skirt': { color: '#DDA0DD', label: 'Skirt', icon: '🎽' },
+            'sweater': { color: '#F7DC6F', label: 'Sweater', icon: '🧶' }
+        };
+
+        const COLOR_CONFIG = {
+            'beige': { hex: '#D4A574', label: 'Beige' },
+            'black': { hex: '#2D2D2D', label: 'Black' },
+            'blue': { hex: '#3B82F6', label: 'Blue' },
+            'gray': { hex: '#6B7280', label: 'Gray' },
+            'grey': { hex: '#6B7280', label: 'Gray' },
+            'green': { hex: '#22C55E', label: 'Green' },
+            'pattren': { hex: '#8B5CF6', label: 'Pattern' },
+            'pattern': { hex: '#8B5CF6', label: 'Pattern' },
+            'red': { hex: '#EF4444', label: 'Red' },
+            'white': { hex: '#F9FAFB', label: 'White' }
+        };
+
+        const CLASSES = ['T-Shirt', 'Dress', 'Jacket', 'Pants', 'Shirt', 'Shorts', 'Skirt', 'Sweater'];
+
+        // ============================================
+        // DOM Elements
+        // ============================================
+        const $ = id => document.getElementById(id);
+
+        const elements = {
+            statusIndicator: $('statusIndicator'),
+            statusText: $('statusText'),
+            tabUpload: $('tabUpload'),
+            tabWebcam: $('tabWebcam'),
+            uploadContent: $('uploadContent'),
+            webcamContent: $('webcamContent'),
+            uploadZone: $('uploadZone'),
+            fileInput: $('fileInput'),
+            previewContainer: $('previewContainer'),
+            previewImg: $('previewImg'),
+            loadingOverlay: $('loadingOverlay'),
+            clearBtn: $('clearBtn'),
+            webcamVideo: $('webcamVideo'),
+            webcamCanvas: $('webcamCanvas'),
+            webcamLoading: $('webcamLoading'),
+            switchCameraBtn: $('switchCameraBtn'),
+            captureBtn: $('captureBtn'),
+            stopCameraBtn: $('stopCameraBtn'),
+            modeCapture: $('modeCapture'),
+            modeLive: $('modeLive'),
+            liveStats: $('liveStats'),
+            fpsCounter: $('fpsCounter'),
+            detectionCounter: $('detectionCounter'),
+            confSlider: $('confSlider'),
+            confValue: $('confValue'),
+            detectBtn: $('detectBtn'),
+            classTags: $('classTags'),
+            resultsEmpty: $('resultsEmpty'),
+            resultsContent: $('resultsContent'),
+            resultCanvas: $('resultCanvas'),
+            statCount: $('statCount'),
+            statConfidence: $('statConfidence'),
+            detectionList: $('detectionList'),
+            toast: $('toast'),
+            toastIcon: $('toastIcon'),
+            toastMessage: $('toastMessage')
+        };
+
+        // ============================================
+        // State
+        // ============================================
+        let state = {
+            currentFile: null,
+            currentTab: 'upload',
+            webcamStream: null,
+            facingMode: 'user',
+            isProcessing: false,
+            webcamMode: 'capture',
+            isLiveDetecting: false,
+            liveDetectionLoop: null,
+            lastFrameTime: 0,
+            fps: 0
+        };
+
+        // ============================================
+        // Initialize
+        // ============================================
+        function init() {
+            renderClassTags();
+            checkAPI();
+            setupEventListeners();
+            setupNavToggle();
+        }
+
+        function setupNavToggle() {
+            const navToggle = document.getElementById('navToggle');
+            const navLinks = document.getElementById('navLinks');
+
+            navToggle.addEventListener('click', () => {
+                navLinks.classList.toggle('show');
+            });
+
+            navLinks.querySelectorAll('.navbar__link').forEach(link => {
+                link.addEventListener('click', () => {
+                    navLinks.classList.remove('show');
+                });
+            });
+        }
+
+        function renderClassTags() {
+            elements.classTags.innerHTML = CLASSES.map(cls => {
+                const config = CLASS_CONFIG[cls.toLowerCase()] || { color: '#888', label: cls };
+                return `
+                    <span class="class-tag">
+                        <span class="class-tag__dot" style="background: ${config.color}"></span>
+                        ${config.label}
+                    </span>
+                `;
+            }).join('');
+        }
+
+        // ============================================
+        // API Check
+        // ============================================
+        async function checkAPI() {
+            try {
+                const res = await fetch(`${API_URL}/health`);
+                if (res.ok) {
+                    elements.statusIndicator.classList.remove('offline');
+                    elements.statusText.textContent = 'API Connected';
+                    showToast('Connected to FashionAI API', 'success');
+                    return true;
+                }
+            } catch (e) {
+                elements.statusIndicator.classList.add('offline');
+                elements.statusText.textContent = 'API Offline';
+                showToast('Backend not running. Start: uvicorn main:app --port 8000', 'error');
+            }
+            return false;
+        }
+
+        // ============================================
+        // Event Listeners
+        // ============================================
+        function setupEventListeners() {
+            elements.tabUpload.addEventListener('click', () => switchTab('upload'));
+            elements.tabWebcam.addEventListener('click', () => switchTab('webcam'));
+            elements.uploadZone.addEventListener('click', () => elements.fileInput.click());
+            elements.uploadZone.addEventListener('dragover', handleDragOver);
+            elements.uploadZone.addEventListener('dragleave', handleDragLeave);
+            elements.uploadZone.addEventListener('drop', handleDrop);
+            elements.fileInput.addEventListener('change', handleFileSelect);
+            elements.clearBtn.addEventListener('click', clearImage);
+            elements.captureBtn.addEventListener('click', captureAndDetect);
+            elements.switchCameraBtn.addEventListener('click', switchCamera);
+            elements.stopCameraBtn.addEventListener('click', stopWebcam);
+            elements.modeCapture.addEventListener('click', () => toggleMode('capture'));
+            elements.modeLive.addEventListener('click', () => toggleMode('live'));
+            elements.confSlider.addEventListener('input', updateConfValue);
+            elements.detectBtn.addEventListener('click', detectClothing);
+        }
+
+        // ============================================
+        // Tab Switching
+        // ============================================
+        function switchTab(tab) {
+            state.currentTab = tab;
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tab);
+            });
+            elements.uploadContent.style.display = tab === 'upload' ? 'block' : 'none';
+            elements.webcamContent.classList.toggle('show', tab === 'webcam');
+            if (tab === 'webcam') {
+                startWebcam();
+            } else {
+                stopWebcam();
+            }
+            hideResults();
+            updateDetectButton();
+        }
+
+        // ============================================
+        // File Upload
+        // ============================================
+        function handleDragOver(e) {
+            e.preventDefault();
+            elements.uploadZone.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            elements.uploadZone.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            elements.uploadZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                handleFile(file);
+            }
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) handleFile(file);
+        }
+
+        function handleFile(file) {
+            state.currentFile = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                elements.previewImg.src = e.target.result;
+                elements.uploadZone.style.display = 'none';
+                elements.previewContainer.classList.add('show');
+                updateDetectButton();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function clearImage() {
+            state.currentFile = null;
+            elements.previewImg.src = '';
+            elements.uploadZone.style.display = 'block';
+            elements.previewContainer.classList.remove('show');
+            elements.fileInput.value = '';
+            updateDetectButton();
+            hideResults();
+        }
+
+        // ============================================
+        // Webcam
+        // ============================================
+        async function startWebcam() {
+            try {
+                elements.webcamLoading.classList.add('show');
+                const constraints = {
+                    video: { facingMode: { ideal: state.facingMode } },
+                    audio: false
+                };
+                state.webcamStream = await navigator.mediaDevices.getUserMedia(constraints);
+                elements.webcamVideo.srcObject = state.webcamStream;
+                elements.webcamVideo.onloadedmetadata = () => {
+                    elements.webcamVideo.play();
+                    elements.webcamLoading.classList.remove('show');
+                    showToast('Camera started', 'success');
+                    updateDetectButton();
+                };
+            } catch (err) {
+                console.error('Webcam error:', err);
+                elements.webcamLoading.classList.remove('show');
+                let errorMsg = 'Cannot access camera';
+                if (window.location.protocol === 'file:') {
+                    errorMsg = 'Please use a local server for camera access';
+                } else if (err.name === 'NotAllowedError') {
+                    errorMsg = 'Camera permission denied';
+                } else if (err.name === 'NotFoundError') {
+                    errorMsg = 'No camera found';
+                }
+                showToast(errorMsg, 'error');
+            }
+        }
+
+        function stopWebcam() {
+            if (state.webcamStream) {
+                state.webcamStream.getTracks().forEach(track => track.stop());
+                state.webcamStream = null;
+                elements.webcamVideo.srcObject = null;
+            }
+            if (state.isLiveDetecting) {
+                toggleMode('capture');
+            }
+            updateDetectButton();
+        }
+
+        async function switchCamera() {
+            state.facingMode = state.facingMode === 'user' ? 'environment' : 'user';
+            stopWebcam();
+            await startWebcam();
+        }
+
+        async function captureAndDetect() {
+            if (!state.webcamStream) return;
+            if (state.webcamMode === 'live') {
+                toggleMode('capture');
+            }
+            const video = elements.webcamVideo;
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
+            canvas.toBlob(async (blob) => {
+                state.currentFile = new File([blob], 'capture.jpg', { type: 'image/jpeg' });
+                elements.previewImg.src = canvas.toDataURL('image/jpeg');
+                await detectClothing();
+            }, 'image/jpeg', 0.9);
+        }
+
+        // ============================================
+        // Live Detection
+        // ============================================
+        function toggleMode(mode) {
+            state.webcamMode = mode;
+            elements.modeCapture.classList.toggle('active', mode === 'capture');
+            elements.modeLive.classList.toggle('active', mode === 'live');
+            const isLive = mode === 'live';
+            elements.captureBtn.style.display = isLive ? 'none' : 'flex';
+            elements.liveStats.classList.toggle('show', isLive);
+            hideResults();
+            if (isLive) {
+                startLiveDetection();
+            } else {
+                stopLiveDetection();
+            }
+        }
+
+        function startLiveDetection() {
+            if (state.isLiveDetecting) return;
+            state.isLiveDetecting = true;
+            elements.liveStats.classList.add('active');
+            runLiveDetectionLoop();
+        }
+
+        function stopLiveDetection() {
+            state.isLiveDetecting = false;
+            elements.liveStats.classList.remove('active');
+            const canvas = elements.webcamCanvas;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        async function runLiveDetectionLoop() {
+            if (!state.isLiveDetecting || !state.webcamStream) return;
+            const startTime = performance.now();
+            try {
+                await detectClothing(true);
+                state.lastFrameTime = startTime;
+                const endTime = performance.now();
+                const fps = 1000 / (endTime - startTime);
+                state.fps = state.fps * 0.9 + fps * 0.1;
+                elements.fpsCounter.textContent = `${state.fps.toFixed(1)} FPS`;
+            } catch (e) {
+                console.error("Live loop error", e);
+            }
+            if (state.isLiveDetecting) {
+                setTimeout(runLiveDetectionLoop, 50);
+            }
+        }
+
+        function drawLiveDetections(detections) {
+            const video = elements.webcamVideo;
+            const canvas = elements.webcamCanvas;
+            if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+            }
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            elements.detectionCounter.textContent = `${detections.length} items`;
+        }
+
+        // ============================================
+        // Detection
+        // ============================================
+        function updateDetectButton() {
+            const hasInput = state.currentTab === 'upload'
+                ? state.currentFile !== null
+                : state.webcamStream !== null;
+            elements.detectBtn.disabled = !hasInput || state.isProcessing;
+        }
+
+        function updateConfValue() {
+            elements.confValue.textContent = `${elements.confSlider.value}%`;
+        }
+
+        async function detectClothing(isSilent = false) {
+            if (!state.currentFile && state.currentTab === 'upload') return;
+            if (!isSilent && state.isProcessing) return;
+
+            state.isProcessing = true;
+            if (!isSilent) elements.loadingOverlay.classList.add('show');
+            if (!isSilent) elements.detectBtn.disabled = true;
+
+            try {
+                let fileToSend = state.currentFile;
+
+                if (state.currentTab === 'webcam') {
+                    const video = elements.webcamVideo;
+                    const canvas = document.createElement('canvas');
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    canvas.getContext('2d').drawImage(video, 0, 0);
+
+                    fileToSend = await new Promise(resolve => {
+                        canvas.toBlob(blob => {
+                            resolve(new File([blob], 'frame.jpg', { type: 'image/jpeg' }));
+                        }, 'image/jpeg', 0.9);
+                    });
+
+                    if (!state.isLiveDetecting) {
+                        elements.previewImg.src = canvas.toDataURL('image/jpeg');
+                    }
+                }
+
+                const formData = new FormData();
+                formData.append('file', fileToSend);
+                formData.append('confidence', elements.confSlider.value / 100);
+
+                const res = await fetch(`${API_URL}/detect`, { method: 'POST', body: formData });
+                if (!res.ok) throw new Error('Detection failed');
+
+                const data = await res.json();
+
+                if (state.isLiveDetecting) {
+                    drawLiveDetections(data.detections);
+                    updateLiveResults(data);
+                } else {
+                    showResults(data);
+                    if (!isSilent) showToast(`Found ${data.detections.length} items`, 'success');
+                }
+
+            } catch (e) {
+                console.error('Detection error:', e);
+                if (!isSilent) showToast('Detection failed. Check console for details.', 'error');
+            } finally {
+                state.isProcessing = false;
+                if (!isSilent) elements.loadingOverlay.classList.remove('show');
+                if (!isSilent) updateDetectButton();
+            }
+        }
+
+        // ============================================
+        // Results Display
+        // ============================================
+        function updateLiveResults(data) {
+            elements.resultsEmpty.style.display = 'none';
+            elements.resultsContent.classList.add('show');
+
+            const video = elements.webcamVideo;
+            const canvas = elements.resultCanvas;
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            data.detections.forEach(det => {
+                const [x1, y1, x2, y2] = det.bbox || [0, 0, 0, 0];
+                const clsName = det.class_name || det.className || det['class'] || 'unknown';
+                const config = CLASS_CONFIG[clsName.toLowerCase()] || { color: '#888', label: clsName };
+                const displayLabel = det.label || config.label;
+                const boxColor = det.colorHex || config.color;
+                ctx.strokeStyle = boxColor;
+                ctx.lineWidth = 3;
+                ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+                const label = `${displayLabel} ${(det.confidence * 100).toFixed(0)}%`;
+                ctx.font = 'bold 14px Inter';
+                const labelWidth = ctx.measureText(label).width + 16;
+                ctx.fillStyle = boxColor;
+                ctx.beginPath();
+                ctx.roundRect(x1, y1 - 28, labelWidth, 24, 4);
+                ctx.fill();
+                ctx.fillStyle = (det.color === 'white' || det.color === 'beige') ? '#000' : '#fff';
+                ctx.fillText(label, x1 + 8, y1 - 10);
+            });
+
+            const count = data.detections.length;
+            const avgConf = count > 0 ? data.detections.reduce((s, d) => s + d.confidence, 0) / count : 0;
+            elements.statCount.textContent = count;
+            elements.statConfidence.textContent = `${(avgConf * 100).toFixed(0)}%`;
+
+            elements.detectionList.innerHTML = data.detections.map(det => {
+                const clsName = det.class_name || det.className || det['class'] || 'unknown';
+                const config = CLASS_CONFIG[clsName.toLowerCase()] || { color: '#888', label: clsName, icon: '👕' };
+                const displayLabel = det.label || config.label;
+                const colorHex = det.colorHex || config.color;
+                const icon = config.icon || '👕';
+                return `
+                    <div class="detection-item">
+                        <span class="detection-item__icon">${icon}</span>
+                        <span class="detection-item__color" style="background: ${colorHex}" title="${det.color || 'N/A'}"></span>
+                        <span class="detection-item__name">${displayLabel}</span>
+                        <span class="detection-item__confidence">${(det.confidence * 100).toFixed(0)}%</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showResults(data) {
+            elements.resultsEmpty.style.display = 'none';
+            elements.resultsContent.classList.add('show');
+
+            const img = new Image();
+            img.onload = () => {
+                const canvas = elements.resultCanvas;
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+
+                data.detections.forEach(det => {
+                    const [x1, y1, x2, y2] = det.bbox || [0, 0, 0, 0];
+                    const clsName = det.class_name || det.className || det['class'] || 'unknown';
+                    const config = CLASS_CONFIG[clsName.toLowerCase()] || { color: '#888', label: clsName };
+                    const displayLabel = det.label || config.label;
+                    const boxColor = det.colorHex || config.color;
+                    ctx.strokeStyle = boxColor;
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+                    const label = `${displayLabel} ${(det.confidence * 100).toFixed(0)}%`;
+                    ctx.font = 'bold 14px Inter';
+                    const labelWidth = ctx.measureText(label).width + 16;
+                    ctx.fillStyle = boxColor;
+                    ctx.beginPath();
+                    ctx.roundRect(x1, y1 - 28, labelWidth, 24, 4);
+                    ctx.fill();
+                    ctx.fillStyle = (det.color === 'white' || det.color === 'beige') ? '#000' : '#fff';
+                    ctx.fillText(label, x1 + 8, y1 - 10);
+                });
+            };
+            img.src = elements.previewImg.src;
+
+            const count = data.detections.length;
+            const avgConf = count > 0 ? data.detections.reduce((s, d) => s + d.confidence, 0) / count : 0;
+            elements.statCount.textContent = count;
+            elements.statConfidence.textContent = `${(avgConf * 100).toFixed(0)}%`;
+
+            elements.detectionList.innerHTML = data.detections.map(det => {
+                const clsName = det.class_name || det.className || det['class'] || 'unknown';
+                const config = CLASS_CONFIG[clsName.toLowerCase()] || { color: '#888', label: clsName, icon: '👕' };
+                const displayLabel = det.label || config.label;
+                const colorHex = det.colorHex || config.color;
+                const icon = config.icon || '👕';
+                return `
+                    <div class="detection-item animate-slide-in">
+                        <span class="detection-item__icon">${icon}</span>
+                        <span class="detection-item__color" style="background: ${colorHex}" title="${det.color || 'N/A'}"></span>
+                        <span class="detection-item__name">${displayLabel}</span>
+                        <span class="detection-item__confidence">${(det.confidence * 100).toFixed(0)}%</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function hideResults() {
+            elements.resultsEmpty.style.display = 'flex';
+            elements.resultsContent.classList.remove('show');
+        }
+
+        // ============================================
+        // Toast Notifications
+        // ============================================
+        function showToast(message, type = 'info') {
+            const icons = { success: 'check_circle', error: 'error', info: 'info' };
+            elements.toastIcon.textContent = icons[type] || 'info';
+            elements.toastMessage.textContent = message;
+            elements.toast.className = `toast ${type}`;
+            elements.toast.classList.add('show');
+            setTimeout(() => { elements.toast.classList.remove('show'); }, 4000);
+        }
+
+        // ============================================
+        // Start App
+        // ============================================
+        init();
+    </script>
+</body>
+
+</html>
