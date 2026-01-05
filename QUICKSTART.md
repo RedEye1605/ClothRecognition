@@ -1,42 +1,70 @@
 # 🚀 FashionAI Quick Start
 
-Get the FashionAI cloth recognition system up and running in 5 minutes.
+<div align="center">
+  <img src="frontend/Logo.png" alt="FashionAI Logo" width="120">
+  
+  **Get FashionAI running in 5 minutes**
+</div>
+
+---
 
 ## Prerequisites
 
-- Python 3.9+
-- pip
+- ✅ Python 3.9+
+- ✅ pip
+- ✅ Trained models (`.pt` files)
 
-## Step 1: Clone and Setup
+---
+
+## Step 1: Clone & Setup
 
 ```bash
-# Navigate to project
-cd cloth-recognition-yolo
+# Clone repository
+git clone https://github.com/RedEye1605/ClothRecognition.git
+cd ClothRecognition
 
-# Create virtual environment (recommended)
+# Create virtual environment
 python -m venv .venv
-.venv\Scripts\activate  # Windows
-# source .venv/bin/activate  # Linux/Mac
 
-# Install dependencies
+# Activate (Windows)
+.venv\Scripts\activate
+
+# Activate (Linux/Mac)
+# source .venv/bin/activate
+```
+
+---
+
+## Step 2: Install Dependencies
+
+```bash
 cd backend
 pip install -r requirements.txt
 ```
 
-## Step 2: Add Models
+---
 
-Download or copy models to `models/` folder:
-- `cloth_classifier.pt` - Clothing detection (YOLOv8)
-- `color_classifier.pt` - Color classification (YOLOv8-cls)
+## Step 3: Add Models
 
-## Step 3: Start Backend
+Place trained models in `models/` folder:
+
+| Model | Description |
+|-------|-------------|
+| `cloth_classifier.pt` | Clothing detection (YOLOv8) |
+| `color_classifier.pt` | Color classification (YOLOv8-cls) |
+
+> 💡 Train your own models using `notebooks/cloth_detection_training.ipynb`
+
+---
+
+## Step 4: Start Backend
 
 ```bash
 cd backend
 uvicorn app.main:app --reload --port 8000
 ```
 
-You should see:
+**Expected output:**
 ```
 🔄 Loading detection model from: .../models/cloth_classifier.pt
 ✅ Detection model loaded: cloth_classifier.pt
@@ -45,19 +73,31 @@ You should see:
 🚀 FashionAI API v3.0.0 starting...
 ```
 
-## Step 4: Start Frontend
+---
 
-Open new terminal:
+## Step 5: Start Frontend
+
+Open a **new terminal**:
+
 ```bash
 cd frontend
 python -m http.server 5500
 ```
 
-## Step 5: Open in Browser
+---
 
-Go to: http://127.0.0.1:5500
+## Step 6: Open Browser
 
-## Test the API
+🌐 Navigate to: **http://127.0.0.1:5500**
+
+You'll see:
+- **Home** - Landing page with features
+- **Try App** - Detection interface
+- **Docs** - Full documentation
+
+---
+
+## 🧪 Test the API
 
 ```bash
 # Health check
@@ -67,22 +107,28 @@ curl http://127.0.0.1:8000/health
 curl http://127.0.0.1:8000/classes
 ```
 
-## Troubleshooting
+---
 
-**Models not loading?**
-- Check `models/` folder has both `.pt` files
-- Verify file names are correct
+## 🐛 Troubleshooting
 
-**API not connecting?**
-- Ensure backend is running on port 8000
-- Check firewall settings
+| Issue | Solution |
+|-------|----------|
+| **Models not loading** | Check `models/` folder has both `.pt` files |
+| **API not connecting** | Ensure backend runs on port 8000 |
+| **Camera not working** | Requires HTTPS or localhost |
+| **Slow first request** | Normal - models load on first use |
 
-**Slow detection?**
-- First request may be slow (model loading)
-- Subsequent requests will be fast
+---
 
-## Next Steps
+## 📚 Next Steps
 
 - 📖 Read full [README.md](README.md)
 - 🎓 Train custom models with notebooks
+- 🐳 Deploy with Docker
 - 🌐 Deploy to HuggingFace Spaces
+
+---
+
+<div align="center">
+  <p>Need help? Check the <a href="#-troubleshooting">troubleshooting section</a></p>
+</div>
