@@ -3,7 +3,7 @@ FROM python:3.9
 
 # Install system dependencies for OpenCV
 USER root
-RUN apt-get update && apt-get install -y libgl1-mesa-glx
+RUN apt-get update && apt-get install -y libgl1 libglib2.0-0
 
 # Set up a new user named "user" with user ID 1000
 RUN useradd -m -u 1000 user
