@@ -1,3 +1,13 @@
+---
+title: Cloth Recognition
+emoji: 👕
+colorFrom: blue
+colorTo: purple
+sdk: docker
+pinned: false
+license: mit
+---
+
 # FashionAI - AI-Powered Clothing Detection
 
 <div align="center">
