@@ -34,15 +34,26 @@ The backend handles the AI model processing. We will deploy it as a Docker Space
 
 ## 2. Frontend Deployment (Vercel)
 
-The frontend is the user interface.
+2.  **Configure Space**:
+    - **Owner**: Your Hugging Face username.
+    - **Space Name**: `ClothRecognition`
+    - **License**: `MIT`
+    - **SDK**: `Docker`
+    - **Template**: `Blank`
+    - **Space Hardware**: `CPU Basic (Free)`
 
-1.  **Configure API URL**:
-    - Open `frontend/app.html`.
-    - Find the line `const API_URL = ...`.
-    - Change it to your Hugging Face Space URL (e.g., `https://username-space-name.hf.space`).
-    - **Note**: Ensure you use `https` and remove any trailing slash.
+3.  **Get Write Token**:
+    - Go to [Settings > Tokens](https://huggingface.co/settings/tokens).
+    - Create a **Write** token.
 
-2.  **Deploy**:
+## 2. Deploy Backend (Auto-Deploy)
+I have already configured the project. Once you create the Space `RedEye1611/ClothRecognition`, I will push the code for you.
+
+## 3. Deploy Frontend (Vercel)
+The frontend is already configured to connect to:
+`https://redeye1611-clothrecognition.hf.space`
+
+1.  **Deploy**:
     - Go to [Vercel Dashboard](https://vercel.com/dashboard).
     - Click **"Add New..."** > **"Project"**.
     - Import your GitHub repository (or upload the `frontend` folder).
