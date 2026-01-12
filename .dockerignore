@@ -1,0 +1,9 @@
+# Exclude notebooks from Docker build
+notebooks/
+.git/
+.venv/
+__pycache__/
+frontend/
+deployment/
+*.md
+LICENSE
