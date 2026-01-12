@@ -19,9 +19,10 @@ Version: 3.0.0
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .config import API_TITLE, API_DESCRIPTION, API_VERSION
-from .routers import detection
+from .core.config import API_TITLE, API_DESCRIPTION, API_VERSION
+from .api.v1.endpoints import detection
 from .services.detector import get_detection_service
+
 
 # ============================================
 # FastAPI App

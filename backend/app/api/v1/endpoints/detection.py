@@ -9,15 +9,16 @@ from typing import List
 from PIL import Image
 import io
 
-from ..schemas import DetectionResponse, HealthResponse, ClassesResponse
-from ..services.detector import get_detection_service
-from ..config import (
+from app.schemas import DetectionResponse, HealthResponse, ClassesResponse
+from app.services.detector import get_detection_service
+from app.core.config import (
     API_VERSION, 
     CLASS_COLORS, 
     COLOR_HEX,
     CLOTH_CLASSIFIER_PATH,
     COLOR_CLASSIFIER_PATH
 )
+
 
 router = APIRouter()
 

@@ -14,13 +14,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">
 
-    <link rel="icon" type="image/png" href="Logo.png">
+    <link rel="icon" type="image/png" href="assets/Logo.png">
 
     <!-- Material Icons -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
 
     <!-- Shared Styles -->
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="css/styles.css">
 
     <style>
         /* ========================================
@@ -1179,7 +1179,12 @@
         // ============================================
         // Configuration
         // ============================================
+        // REPLACE WITH YOUR HUGGING FACE SPACE URL FOR PRODUCTION
+        // Example: https://redeye1605-clothing-recognition.hf.space
+        // Leave as localhost for local testing
         const API_URL = 'http://127.0.0.1:8000';
+        // const API_URL = 'https://YOUR_HF_SPACE_NAME.hf.space'; // Uncomment this for Vercel
+
 
         const CLASS_CONFIG = {
             'tshirt': { color: '#FF6B6B', label: 'T-Shirt', icon: '👕' },
@@ -1309,19 +1314,53 @@
         // ============================================
         // API Check
         // ============================================
+        // ============================================
+        // API Check & Wake-up Logic
+        // ============================================
+        let retryCount = 0;
+        const MAX_RETRIES = 50; // Try for 100 seconds (50 * 2s)
+
         async function checkAPI() {
             try {
-                const res = await fetch(`${API_URL}/health`);
+                elements.statusText.textContent = 'Connecting...';
+
+                // Set short timeout for health check
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+                const res = await fetch(`${API_URL}/health`, { signal: controller.signal });
+                clearTimeout(timeoutId);
+
                 if (res.ok) {
                     elements.statusIndicator.classList.remove('offline');
                     elements.statusText.textContent = 'API Connected';
+                    // statusIndicator style for online
+                    elements.statusIndicator.style.background = 'var(--success)';
+                    elements.statusIndicator.style.boxShadow = '0 0 12px var(--success-glow)';
+                    elements.statusIndicator.style.animation = 'pulse 2s ease-in-out infinite';
+
                     showToast('Connected to FashionAI API', 'success');
                     return true;
                 }
             } catch (e) {
+                console.log("Connection failed", e);
                 elements.statusIndicator.classList.add('offline');
-                elements.statusText.textContent = 'API Offline';
-                showToast('Backend not running. Start: uvicorn main:app --port 8000', 'error');
+
+                // If offline, start waking up sequence
+                if (retryCount < MAX_RETRIES) {
+                    retryCount++;
+                    elements.statusText.textContent = `Waking up server... (${retryCount})`;
+                    elements.statusIndicator.style.background = '#FFA500'; // Orange for waiting
+                    elements.statusIndicator.style.boxShadow = '0 0 12px rgba(255, 165, 0, 0.5)';
+
+                    // Retry after 2 seconds
+                    setTimeout(checkAPI, 2000);
+                } else {
+                    elements.statusText.textContent = 'API Offline';
+                    elements.statusIndicator.style.background = 'var(--error)';
+                    elements.statusIndicator.style.boxShadow = '0 0 12px var(--error-glow)';
+                    showToast('Server is sleeping or offline. Please refresh later.', 'error');
+                }
             }
             return false;
         }
@@ -1394,17 +1433,63 @@
         }
 
         function handleFile(file) {
-            state.currentFile = file;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                elements.previewImg.src = e.target.result;
-                elements.uploadZone.style.display = 'none';
-                elements.previewContainer.classList.add('show');
-                updateDetectButton();
-            };
-            reader.readAsDataURL(file);
+            // Optimally resize before processing
+            resizeImage(file).then(resizedFile => {
+                state.currentFile = resizedFile;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    elements.previewImg.src = e.target.result;
+                    elements.uploadZone.style.display = 'none';
+                    elements.previewContainer.classList.add('show');
+                    updateDetectButton();
+                };
+                reader.readAsDataURL(resizedFile);
+            });
         }
 
+        // ============================================
+        // Image Optimization
+        // ============================================
+        async function resizeImage(file, maxWidth = 1024) {
+            return new Promise((resolve) => {
+                if (!file.type.match(/image.*/)) {
+                    resolve(file);
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = (readerEvent) => {
+                    const image = new Image();
+                    image.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = image.width;
+                        let height = image.height;
+
+                        if (width > maxWidth) {
+                            height *= maxWidth / width;
+                            width = maxWidth;
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        canvas.getContext('2d').drawImage(image, 0, 0, width, height);
+
+                        canvas.toBlob((blob) => {
+                            resolve(new File([blob], file.name, {
+                                type: 'image/jpeg',
+                                lastModified: Date.now()
+                            }));
+                        }, 'image/jpeg', 0.85); // 85% quality JPEG
+                    }
+                    image.src = readerEvent.target.result;
+                }
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // ============================================
+        // Clear & Reset
+        // ============================================
         function clearImage() {
             state.currentFile = null;
             elements.previewImg.src = '';

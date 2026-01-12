@@ -9,7 +9,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
-from ..config import (
+from ..core.config import (
     CLOTH_CLASSIFIER_PATH, 
     COLOR_CLASSIFIER_PATH,
     CLOTHING_CLASSES,
@@ -17,6 +17,7 @@ from ..config import (
     COLOR_HEX,
     CLASS_MAPPING
 )
+
 
 # Import YOLO
 try:

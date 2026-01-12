@@ -10,16 +10,23 @@ from typing import Dict, List
 # ============================================
 # Paths
 # ============================================
-# Absolute path to backend/app/config.py
+# Absolute path to backend/app/core/config.py
 CONFIG_PATH = Path(__file__).resolve()
-APP_DIR = CONFIG_PATH.parent
+CORE_DIR = CONFIG_PATH.parent
+APP_DIR = CORE_DIR.parent
 BACKEND_DIR = APP_DIR.parent
-PROJECT_ROOT = BACKEND_DIR.parent
-MODELS_DIR = PROJECT_ROOT / "models"
+PROJECT_ROOT = BACKEND_DIR.parent # This might be the container root
+# In the new structure with Docker, models are in /code/models or relative to backend
+# If running locally: backend/models
+
+# Let's make it robust for both local and Docker
+# If we are in backend/app/core, Models are in ../../models (relative to backend dir)
+MODELS_DIR = BACKEND_DIR / "models"
 
 # Model paths
 CLOTH_CLASSIFIER_PATH = (MODELS_DIR / "cloth_classifier.pt").absolute()
 COLOR_CLASSIFIER_PATH = (MODELS_DIR / "color_classifier.pt").absolute()
+
 
 # ============================================
 # Class Configuration
