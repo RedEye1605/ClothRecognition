@@ -1,18 +1,9 @@
----
-title: Cloth Recognition
-emoji: 👕
-colorFrom: blue
-colorTo: purple
-sdk: docker
-pinned: false
-license: mit
-app_port: 7860
----
+<h1 align="center">FashionAI</h1>
+<p align="center"><b>AI-Powered Clothing Detection</b></p>
 
-# FashionAI - AI-Powered Clothing Detection
 
 <div align="center">
-  <img src="frontend/Logo.png" alt="FashionAI Logo" width="150">
+  <img src="frontend/assets/Logo.png" alt="FashionAI Logo" width="150">
   
   **Intelligent Clothing Detection & Color Classification using YOLOv8**
   
